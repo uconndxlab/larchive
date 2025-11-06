@@ -65,22 +65,3 @@
         </div>
     </div>
 @endif
-
-{{-- Dublin Core Metadata --}}
-@if($item->metadata->isNotEmpty())
-    <div class="card">
-        <div class="card-header">
-            <h5 class="mb-0">
-                <i class="bi bi-tags"></i> Metadata
-            </h5>
-        </div>
-        <div class="card-body">
-            <dl class="row mb-0">
-                @foreach($item->getDublinCore() as $key => $value)
-                    <dt class="col-sm-4 text-muted small">{{ \App\Models\Concerns\DublinCore::getLabel($key) }}</dt>
-                    <dd class="col-sm-8">{{ $value }}</dd>
-                @endforeach
-            </dl>
-        </div>
-    </div>
-@endif

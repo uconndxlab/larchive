@@ -21,6 +21,7 @@ class Item extends Model
         'collection_id',
         'item_type',
         'transcript_id',
+        'ohms_json',
         'title',
         'slug',
         'description',
@@ -31,6 +32,7 @@ class Item extends Model
     protected $casts = [
         'published_at' => 'datetime',
         'extra' => 'array',
+        'ohms_json' => 'array',
     ];
 
     public function collection()

@@ -30,6 +30,8 @@
     </div>
 
     <div class="col-md-4">
+        @include('items._ohms_upload')
+
         <div class="card border-danger">
             <div class="card-header bg-danger text-white">
                 <h6 class="mb-0">Danger Zone</h6>

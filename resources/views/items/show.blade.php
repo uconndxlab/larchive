@@ -1,72 +1,56 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>{{ $item->title }}</h1>
-    <div class="btn-group">
-        <a href="{{ route('items.edit', $item) }}" class="btn btn-primary">Edit</a>
-        <a href="{{ route('items.index') }}" class="btn btn-outline-secondary">Back to List</a>
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-md-8">
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0">
+{{-- Page Header --}}
+<div class="mb-4">
+    <div class="d-flex justify-content-between align-items-start mb-3">
+        <div>
+            <h1 class="mb-2">{{ $item->title }}</h1>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-{{ $item->item_type === 'audio' ? 'primary' : ($item->item_type === 'video' ? 'danger' : ($item->item_type === 'image' ? 'success' : ($item->item_type === 'document' ? 'warning' : 'secondary'))) }}">
                     @switch($item->item_type)
-                        @case('audio')  @break
-                        @case('video')  @break
-                        @case('image')  @break
-                        @case('document')  @break
-                        @default 📦
+                        @case('audio') <i class="bi bi-music-note"></i> Audio @break
+                        @case('video') <i class="bi bi-camera-video"></i> Video @break
+                        @case('image') <i class="bi bi-image"></i> Image @break
+                        @case('document') <i class="bi bi-file-earmark-text"></i> Document @break
+                        @default <i class="bi bi-file-earmark"></i> {{ ucfirst($item->item_type) }}
                     @endswitch
-                    Details
-                </h5>
-            </div>
-            <div class="card-body">
-                <dl class="row mb-0">
-                    <dt class="col-sm-3">Type</dt>
-                    <dd class="col-sm-9">
-                        <span class="badge bg-secondary">{{ ucfirst($item->item_type) }}</span>
-                    </dd>
-
-                    <dt class="col-sm-3">Slug</dt>
-                    <dd class="col-sm-9"><code>{{ $item->slug }}</code></dd>
-
-                    <dt class="col-sm-3">Collection</dt>
-                    <dd class="col-sm-9">
-                        @if($item->collection)
-                            <a href="{{ route('collections.show', $item->collection) }}">{{ $item->collection->title }}</a>
-                        @else
-                            <span class="text-muted">None</span>
-                        @endif
-                    </dd>
-
-                    <dt class="col-sm-3">Status</dt>
-                    <dd class="col-sm-9">
-                        @if($item->published_at)
-                            <span class="badge bg-success">Published</span>
-                            <small class="text-muted ms-2">{{ $item->published_at->format('M d, Y') }}</small>
-                        @else
-                            <span class="badge bg-secondary">Draft</span>
-                        @endif
-                    </dd>
-
-                    @if($item->description)
-                        <dt class="col-sm-3">Description</dt>
-                        <dd class="col-sm-9">{{ $item->description }}</dd>
-                    @endif
-
-                    <dt class="col-sm-3">Created</dt>
-                    <dd class="col-sm-9">{{ $item->created_at->format('M d, Y g:i A') }}</dd>
-
-                    <dt class="col-sm-3">Updated</dt>
-                    <dd class="col-sm-9">{{ $item->updated_at->format('M d, Y g:i A') }}</dd>
-                </dl>
+                </span>
+                @if($item->published_at)
+                    <span class="badge bg-success">
+                        <i class="bi bi-check-circle"></i> Published
+                    </span>
+                @else
+                    <span class="badge bg-secondary">
+                        <i class="bi bi-clock"></i> Draft
+                    </span>
+                @endif
+                @if($item->collection)
+                    <a href="{{ route('collections.show', $item->collection) }}" class="badge bg-light text-dark text-decoration-none border">
+                        <i class="bi bi-folder"></i> {{ $item->collection->title }}
+                    </a>
+                @endif
             </div>
         </div>
+        <div class="btn-group">
+            <a href="{{ route('items.edit', $item) }}" class="btn btn-primary">
+                <i class="bi bi-pencil"></i> Edit
+            </a>
+            <a href="{{ route('items.index') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back
+            </a>
+        </div>
+    </div>
 
+    @if($item->description)
+        <div class="alert alert-light border">
+            <p class="mb-0">{{ $item->description }}</p>
+        </div>
+    @endif
+</div>
+
+<div class="row g-4">
+    <div class="col-12">
         {{-- Type-specific content rendering --}}
         @switch($item->item_type)
             @case('audio')
@@ -84,6 +68,108 @@
             @default
                 @include('items.partials.show_other')
         @endswitch
+
+        {{-- OHMS Viewer --}}
+        @if(!empty($item->ohms_json))
+            @include('items.partials.show_ohms')
+        @endif
+
+        {{-- Metadata & Details Card --}}
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">
+                    <i class="bi bi-info-circle"></i>
+                    Item Details
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <h6 class="text-muted text-uppercase small mb-3">Basic Information</h6>
+                        <dl class="row mb-0">
+                            <dt class="col-sm-4 small text-muted">Identifier</dt>
+                            <dd class="col-sm-8"><code class="text-primary">{{ $item->slug }}</code></dd>
+
+                            <dt class="col-sm-4 small text-muted">Type</dt>
+                            <dd class="col-sm-8">{{ ucfirst($item->item_type) }}</dd>
+
+                            <dt class="col-sm-4 small text-muted">Collection</dt>
+                            <dd class="col-sm-8">
+                                @if($item->collection)
+                                    <a href="{{ route('collections.show', $item->collection) }}" class="text-decoration-none">
+                                        {{ $item->collection->title }}
+                                    </a>
+                                @else
+                                    <span class="text-muted fst-italic">Uncategorized</span>
+                                @endif
+                            </dd>
+
+                            <dt class="col-sm-4 small text-muted">Status</dt>
+                            <dd class="col-sm-8">
+                                @if($item->published_at)
+                                    <span class="text-success">Published on {{ $item->published_at->format('M d, Y') }}</span>
+                                @else
+                                    <span class="text-muted">Draft</span>
+                                @endif
+                            </dd>
+                        </dl>
+                    </div>
+
+                    <div class="col-md-6">
+                        <h6 class="text-muted text-uppercase small mb-3">System Information</h6>
+                        <dl class="row mb-0">
+                            <dt class="col-sm-4 small text-muted">Created</dt>
+                            <dd class="col-sm-8">{{ $item->created_at->format('M d, Y') }}<br><small class="text-muted">{{ $item->created_at->format('g:i A') }}</small></dd>
+
+                            <dt class="col-sm-4 small text-muted">Last Updated</dt>
+                            <dd class="col-sm-8">{{ $item->updated_at->format('M d, Y') }}<br><small class="text-muted">{{ $item->updated_at->format('g:i A') }}</small></dd>
+
+                            @if(!empty($item->ohms_json))
+                                <dt class="col-sm-4 small text-muted">OHMS Data</dt>
+                                <dd class="col-sm-8">
+                                    <span class="badge bg-primary">
+                                        <i class="bi bi-mic-fill"></i>
+                                        {{ count($item->ohms_json['segments'] ?? []) }} segments
+                                    </span>
+                                </dd>
+                            @endif
+
+                            @if($item->hasTranscript())
+                                <dt class="col-sm-4 small text-muted">Transcript</dt>
+                                <dd class="col-sm-8">
+                                    <a href="{{ Storage::url($item->transcript->file_path) }}" target="_blank" class="text-decoration-none">
+                                        <i class="bi bi-file-text"></i>
+                                        {{ $item->transcript->original_filename }}
+                                    </a>
+                                </dd>
+                            @endif
+                        </dl>
+                    </div>
+                </div>
+
+                {{-- Dublin Core Metadata --}}
+                @php
+                    $dcMetadata = $item->getDublinCore();
+                @endphp
+                @if(!empty($dcMetadata))
+                    <hr class="my-4">
+                    <h6 class="text-muted text-uppercase small mb-3">
+                        <i class="bi bi-tags"></i>
+                        Dublin Core Metadata
+                    </h6>
+                    <div class="row g-3">
+                        @foreach($dcMetadata as $key => $value)
+                            @if($value)
+                                <div class="col-md-6">
+                                    <strong class="small text-muted d-block">{{ str_replace('dc.', '', $key) }}</strong>
+                                    <div class="small">{{ $value }}</div>
+                                </div>
+                            @endif
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+        </div>
     </div>
 </div>
 @endsection

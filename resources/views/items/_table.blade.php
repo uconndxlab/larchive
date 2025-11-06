@@ -33,7 +33,7 @@
         </td>
         <td>{{ $item->updated_at->diffForHumans() }}</td>
         <td class="text-end">
-            <div class="btn-group btn-group-sm">
+            <div class="btn-group btn-group-sm" role="group">
                 <a href="{{ route('items.show', $item) }}" class="btn btn-outline-primary">View</a>
                 <a href="{{ route('items.edit', $item) }}" class="btn btn-outline-secondary">Edit</a>
             </div>

@@ -11,14 +11,9 @@
         </td>
         <td>{{ $collection->updated_at->diffForHumans() }}</td>
         <td class="text-end">
-            <div class="btn-group btn-group-sm">
+            <div class="btn-group btn-group-sm" role="group">
                 <a href="{{ route('collections.show', $collection) }}" class="btn btn-outline-primary">View</a>
                 <a href="{{ route('collections.edit', $collection) }}" class="btn btn-outline-secondary">Edit</a>
-                <form action="{{ route('collections.destroy', $collection) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this collection?')">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn btn-outline-danger">Delete</button>
-                </form>
             </div>
         </td>
     </tr>
