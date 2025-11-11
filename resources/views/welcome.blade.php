@@ -13,6 +13,7 @@
         $collectionsCount = \App\Models\Collection::count();
         $itemsCount = \App\Models\Item::count();
         $mediaCount = \App\Models\Media::count();
+        $exhibitsCount = \App\Models\Exhibit::count();
         $dbReady = true;
     } catch (\Exception $e) {
         $dbReady = false;
@@ -34,11 +35,11 @@ php artisan storage:link</code></pre>
 @endif
 
 <div class="row g-4">
-    <div class="col-md-4">
+    <div class="col-md-3">
         <div class="card h-100">
             <div class="card-body">
                 <h5 class="card-title">
-                    <i class="bi bi-collection"></i> Collections
+                    Collections
                 </h5>
                 <p class="card-text text-muted">
                     Organize items into thematic groups with metadata and publishing controls.
@@ -52,7 +53,7 @@ php artisan storage:link</code></pre>
         </div>
     </div>
 
-    <div class="col-md-4">
+    <div class="col-md-3">
         <div class="card h-100">
             <div class="card-body">
                 <h5 class="card-title">
@@ -70,11 +71,29 @@ php artisan storage:link</code></pre>
         </div>
     </div>
 
-    <div class="col-md-4">
+    <div class="col-md-3">
         <div class="card h-100">
             <div class="card-body">
                 <h5 class="card-title">
-                   Media
+                    Exhibits
+                </h5>
+                <p class="card-text text-muted">
+                    Create narrative-driven presentations with hierarchical pages and curated items.
+                </p>
+                <a href="{{ route('exhibits.index') }}" class="btn btn-primary btn-sm">Browse Exhibits</a>
+                <a href="{{ route('exhibits.create') }}" class="btn btn-outline-secondary btn-sm">Create New</a>
+            </div>
+            <div class="card-footer bg-light">
+                <small class="text-muted">{{ $dbReady ? $exhibitsCount : '—' }} total</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">
+                    Media
                 </h5>
                 <p class="card-text text-muted">
                     Upload and manage images, documents, audio, and video files attached to items.
@@ -98,26 +117,27 @@ php artisan storage:link</code></pre>
                 <div class="row">
                     <div class="col-md-6">
                         <h6>Implemented</h6>
-                        <ul class="list-unstyled">
-                            <li>✓ Collections CRUD with soft deletes</li>
-                            <li>✓ Items CRUD with optional collection assignment</li>
-                            <li>✓ Media uploads with MIME validation</li>
-                            <li>✓ Flexible key-value metadata</li>
-                            <li>✓ HTMX-powered live search & filters</li>
-                            <li>✓ Auto-slug generation</li>
-                            <li>✓ Publishing workflow (published_at)</li>
-                            <li>✓ Bootstrap 5 + HTMX via CDN</li>
+                        <ul>
+                            <li>Collections with soft deletes and publishing</li>
+                            <li>Items with item types (audio, video, image, document, other)</li>
+                            <li>Dublin Core metadata via key-value pairs</li>
+                            <li>Exhibits with hierarchical pages and multiple layouts</li>
+                            <li>Media uploads with MIME validation and transcripts</li>
+                            <li>OHMS XML import for oral histories</li>
+                            <li>Auto-slug generation with conflict resolution</li>
+                            <li>Soft delete with restore functionality</li>
+                            <li>HTMX for dynamic updates</li>
                         </ul>
                     </div>
                     <div class="col-md-6">
-                        <h6>🚧 Roadmap</h6>
-                        <ul class="list-unstyled text-muted">
-                            <li>• Exhibits (curated item showcases)</li>
-                            <li>• Media management UI</li>
-                            <li>• Metadata management UI</li>
-                            <li>• Drag-and-drop media reordering</li>
-                            <li>• Public-facing views</li>
-                            <li>• Search across metadata</li>
+                        <h6>Roadmap</h6>
+                        <ul>
+                            <li>Exhibit themes and templates</li>
+                            <li>Drag-and-drop reordering (pages, items, media)</li>
+                            <li>Advanced search across metadata fields</li>
+                            <li>Public-facing views (separate from admin)</li>
+                            <li>Batch operations (import, export, delete)</li>
+                            <li>User authentication and permissions</li>
                         </ul>
                     </div>
                 </div>
@@ -128,15 +148,16 @@ php artisan storage:link</code></pre>
 
 <div class="row mt-4">
     <div class="col-md-12">
-        <div class="card border-info">
+        <div class="card">
             <div class="card-body">
-                <h6 class="card-title text-info">Quick Start</h6>
-                <ol class="mb-0 small">
+                <h6 class="card-title">Quick Start</h6>
+                <ol class="mb-0">
                     <li>Run <code>php artisan migrate</code> to create database tables</li>
                     <li>Run <code>php artisan storage:link</code> to enable file uploads</li>
                     <li>Create your first <a href="{{ route('collections.create') }}">Collection</a></li>
                     <li>Add <a href="{{ route('items.create') }}">Items</a> to your collection</li>
-                    <li>Upload media files and add metadata to items</li>
+                    <li>Upload media files and add Dublin Core metadata</li>
+                    <li>Create an <a href="{{ route('exhibits.create') }}">Exhibit</a> to showcase items</li>
                 </ol>
             </div>
         </div>
