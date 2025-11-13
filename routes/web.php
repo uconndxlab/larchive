@@ -6,6 +6,7 @@ use App\Http\Controllers\ItemOhmsController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\ExhibitController;
 use App\Http\Controllers\ExhibitPageController;
+use App\Http\Controllers\ExportController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -51,4 +52,8 @@ Route::patch('exhibits/{exhibit}/pages/{page}/items/{item}', [ExhibitPageControl
 Route::delete('exhibits/{exhibit}/pages/{page}/items/{item}', [ExhibitPageController::class, 'detachItem'])->name('exhibits.pages.items.detach');
 Route::patch('exhibits/{exhibit}/pages/reorder', [ExhibitPageController::class, 'reorder'])->name('exhibits.pages.reorder');
 Route::patch('exhibits/{exhibit}/pages/{page}/items/reorder', [ExhibitPageController::class, 'reorderItems'])->name('exhibits.pages.items.reorder');
+
+// Export routes
+Route::get('export', [ExportController::class, 'index'])->name('export.index');
+Route::post('export/omeka', [ExportController::class, 'omeka'])->name('export.omeka');
 

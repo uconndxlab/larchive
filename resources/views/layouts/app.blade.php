@@ -31,6 +31,13 @@
                         <a class="nav-link" href="{{ route('exhibits.index') }}">Exhibits</a>
                     </li>
                 </ul>
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('export.index') }}">
+                            <i class="bi bi-download"></i> Export
+                        </a>
+                    </li>
+                </ul>
             </div>
         </div>
     </nav>
