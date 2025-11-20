@@ -5,15 +5,18 @@ namespace App\Http\Controllers;
 use App\Models\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class CollectionController extends Controller
 {
+    use AuthorizesRequests;
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $query = Collection::query();
+        $query = Collection::visibleTo(Auth::user());
 
         if (request('search')) {
             $query->where('title', 'like', '%' . request('search') . '%');
@@ -34,6 +37,8 @@ class CollectionController extends Controller
      */
     public function create()
     {
+        $this->authorize('create', Collection::class);
+        
         return view('collections.create');
     }
 
@@ -42,10 +47,13 @@ class CollectionController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorize('create', Collection::class);
+        
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'slug' => 'nullable|string|max:255|unique:collections,slug',
             'description' => 'nullable|string',
+            'visibility' => 'required|in:public,authenticated,hidden',
             'publish_now' => 'nullable|boolean',
         ]);
 
@@ -64,6 +72,8 @@ class CollectionController extends Controller
      */
     public function show(Collection $collection)
     {
+        $this->authorize('view', $collection);
+        
         $collection->load('items');
         return view('collections.show', compact('collection'));
     }
@@ -73,6 +83,8 @@ class CollectionController extends Controller
      */
     public function edit(Collection $collection)
     {
+        $this->authorize('update', $collection);
+        
         return view('collections.edit', compact('collection'));
     }
 
@@ -81,10 +93,13 @@ class CollectionController extends Controller
      */
     public function update(Request $request, Collection $collection)
     {
+        $this->authorize('update', $collection);
+        
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'slug' => 'nullable|string|max:255|unique:collections,slug,' . $collection->id,
             'description' => 'nullable|string',
+            'visibility' => 'required|in:public,authenticated,hidden',
             'publish_now' => 'nullable|boolean',
         ]);
 
@@ -103,6 +118,8 @@ class CollectionController extends Controller
      */
     public function destroy(Collection $collection)
     {
+        $this->authorize('delete', $collection);
+        
         $collection->delete();
 
         return redirect()->route('collections.index')

@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
+use App\Models\User;
 
 class Exhibit extends Model
 {
@@ -13,6 +15,7 @@ class Exhibit extends Model
     protected $fillable = [
         'title',
         'slug',
+        'visibility',
         'description',
         'credits',
         'theme',
@@ -105,5 +108,24 @@ class Exhibit extends Model
     public function getRouteKeyName()
     {
         return 'slug';
+    }
+
+    /**
+     * Scope exhibits visible to a given user.
+     */
+    public function scopeVisibleTo(Builder $query, ?User $user): Builder
+    {
+        // Admins see everything
+        if ($user && $user->isAdmin()) {
+            return $query;
+        }
+
+        // Authenticated users see public and authenticated
+        if ($user) {
+            return $query->whereIn('visibility', ['public', 'authenticated']);
+        }
+
+        // Guests see only public
+        return $query->where('visibility', 'public');
     }
 }

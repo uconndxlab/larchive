@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\UploadMediaRequest;
+use App\Jobs\ProcessMediaUpload;
 use App\Models\Item;
 use App\Models\Media;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class MediaController extends Controller
 {
@@ -19,49 +22,84 @@ class MediaController extends Controller
     }
 
     /**
-     * Store multiple uploaded files.
+     * Store multiple uploaded files using streamed uploads and queued processing.
      */
-    public function store(Request $request, Item $item)
+    public function store(UploadMediaRequest $request, Item $item)
     {
-        $request->validate([
-            'files' => 'required|array',
-            'files.*' => 'required|file|max:524288|mimes:jpg,jpeg,png,gif,svg,webp,pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv,mp3,mp4,wav,avi,mov,zip',
-            'alt_text' => 'nullable|string|max:255',
-        ]);
-
+        // Check if files were actually uploaded
+        if (!$request->hasFile('files')) {
+            if ($request->header('HX-Request')) {
+                // Return the media list with an error message for HTMX
+                $item->load('media');
+                return view('media._list', compact('item'))
+                    ->with('uploadError', 'Please select at least one file to upload.');
+            }
+            
+            return redirect()->back()->withErrors(['files' => 'Please select at least one file to upload.']);
+        }
+        
         $files = $request->file('files');
         $altText = $request->input('alt_text');
+        
+        // Determine storage disk from config
+        $disk = config('media.disk', 'public');
 
         // Get current max sort_order
         $maxSort = $item->media()->max('sort_order') ?? -1;
 
+        $uploadedMedia = [];
+
         foreach ($files as $index => $file) {
-            $originalName = $file->getClientOriginalName();
-            $path = $file->store("items/{$item->id}", 'public');
-            $mimeType = $file->getMimeType();
-            $size = $file->getSize();
+            try {
+                $originalName = $file->getClientOriginalName();
+                $mimeType = $file->getMimeType();
+                $size = $file->getSize();
 
-            // Extract image dimensions if image
-            $width = null;
-            $height = null;
-            if (str_starts_with($mimeType, 'image/')) {
-                $fullPath = Storage::disk('public')->path($path);
-                $dimensions = @getimagesize($fullPath);
-                if ($dimensions) {
-                    $width = $dimensions[0];
-                    $height = $dimensions[1];
+                // Stream the file to storage (efficient for large files)
+                // This uses a stream internally, avoiding loading entire file into memory
+                $path = Storage::disk($disk)->putFile(
+                    "items/{$item->id}",
+                    $file,
+                    'private' // Use private visibility for S3
+                );
+
+                // Create media record with 'uploading' status
+                $media = $item->media()->create([
+                    'filename' => $originalName,
+                    'path' => $path,
+                    'mime_type' => $mimeType,
+                    'size' => $size,
+                    'alt_text' => $altText,
+                    'sort_order' => ++$maxSort,
+                    'processing_status' => 'uploaded',
+                ]);
+
+                $uploadedMedia[] = $media;
+
+                // Dispatch queued job for metadata extraction if enabled
+                if (config('media.processing.enabled', true)) {
+                    ProcessMediaUpload::dispatch($media);
+                    
+                    Log::info("Dispatched media processing job", [
+                        'media_id' => $media->id,
+                        'filename' => $originalName,
+                        'size' => $size,
+                    ]);
+                } else {
+                    // If processing is disabled, mark as ready immediately
+                    $media->markAsReady();
                 }
-            }
 
-            $item->media()->create([
-                'filename' => $originalName,
-                'path' => $path,
-                'mime_type' => $mimeType,
-                'size' => $size,
-                'alt_text' => $altText,
-                'sort_order' => ++$maxSort,
-                'meta' => $width && $height ? ['width' => $width, 'height' => $height] : null,
-            ]);
+            } catch (\Exception $e) {
+                Log::error("Failed to upload media file", [
+                    'item_id' => $item->id,
+                    'filename' => $originalName ?? 'unknown',
+                    'error' => $e->getMessage(),
+                ]);
+
+                // Continue with remaining files
+                continue;
+            }
         }
 
         $item->load('media');

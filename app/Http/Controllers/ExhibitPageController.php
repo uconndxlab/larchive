@@ -7,10 +7,13 @@ use App\Models\ExhibitPage;
 use App\Models\Item;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class ExhibitPageController extends Controller
 {
+    use AuthorizesRequests;
     /**
      * Display a listing of pages for an exhibit.
      */
@@ -26,6 +29,8 @@ class ExhibitPageController extends Controller
      */
     public function create(Exhibit $exhibit, Request $request)
     {
+        $this->authorize('create', [ExhibitPage::class, $exhibit]);
+        
         $parentId = $request->query('parent_id');
         $parent = $parentId ? ExhibitPage::findOrFail($parentId) : null;
         
@@ -37,6 +42,8 @@ class ExhibitPageController extends Controller
      */
     public function store(Request $request, Exhibit $exhibit)
     {
+        $this->authorize('create', [ExhibitPage::class, $exhibit]);
+        
         $validated = $request->validate([
             'parent_id' => 'nullable|exists:exhibit_pages,id',
             'title' => 'required|string|max:255',
@@ -46,6 +53,7 @@ class ExhibitPageController extends Controller
                 'max:255',
                 Rule::unique('exhibit_pages')->where('exhibit_id', $exhibit->id)
             ],
+            'visibility' => 'required|in:public,authenticated,hidden',
             'content' => 'nullable|string',
             'layout_blocks' => 'nullable|array',
         ]);
@@ -74,6 +82,8 @@ class ExhibitPageController extends Controller
      */
     public function show(Exhibit $exhibit, ExhibitPage $page)
     {
+        $this->authorize('view', $page);
+        
         $page->load(['children', 'items', 'parent']);
         
         return view('exhibits.pages.show', compact('exhibit', 'page'));
@@ -84,6 +94,8 @@ class ExhibitPageController extends Controller
      */
     public function edit(Exhibit $exhibit, ExhibitPage $page)
     {
+        $this->authorize('update', $page);
+        
         $page->load('items');
         $availableItems = Item::orderBy('title')->get();
         
@@ -95,6 +107,8 @@ class ExhibitPageController extends Controller
      */
     public function update(Request $request, Exhibit $exhibit, ExhibitPage $page)
     {
+        $this->authorize('update', $page);
+        
         $validated = $request->validate([
             'parent_id' => 'nullable|exists:exhibit_pages,id',
             'title' => 'required|string|max:255',
@@ -104,6 +118,7 @@ class ExhibitPageController extends Controller
                 'max:255',
                 Rule::unique('exhibit_pages')->where('exhibit_id', $exhibit->id)->ignore($page->id)
             ],
+            'visibility' => 'required|in:public,authenticated,hidden',
             'content' => 'nullable|string',
             'layout_blocks' => 'nullable|array',
         ]);
@@ -119,6 +134,8 @@ class ExhibitPageController extends Controller
      */
     public function destroy(Exhibit $exhibit, ExhibitPage $page)
     {
+        $this->authorize('delete', $page);
+        
         $page->delete();
 
         return redirect()->route('exhibits.show', $exhibit)

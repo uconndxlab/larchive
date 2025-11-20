@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\User;
 
 /**
  * Item model for archival objects.
@@ -24,6 +26,7 @@ class Item extends Model
         'ohms_json',
         'title',
         'slug',
+        'visibility',
         'description',
         'published_at',
         'extra',
@@ -137,5 +140,24 @@ class Item extends Model
     public function hasTranscript(): bool
     {
         return $this->transcript_id !== null;
+    }
+
+    /**
+     * Scope items visible to a given user.
+     */
+    public function scopeVisibleTo(Builder $query, ?User $user): Builder
+    {
+        // Admins see everything
+        if ($user && $user->isAdmin()) {
+            return $query;
+        }
+
+        // Authenticated users see public and authenticated
+        if ($user) {
+            return $query->whereIn('visibility', ['public', 'authenticated']);
+        }
+
+        // Guests see only public
+        return $query->where('visibility', 'public');
     }
 }

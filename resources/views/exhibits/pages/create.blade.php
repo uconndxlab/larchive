@@ -56,6 +56,30 @@
                     </div>
 
                     <div class="mb-3">
+                        <label for="visibility" class="form-label">Visibility <span class="text-danger">*</span></label>
+                        <select 
+                            class="form-select @error('visibility') is-invalid @enderror" 
+                            id="visibility" 
+                            name="visibility" 
+                            required
+                        >
+                            <option value="public" {{ old('visibility') == 'public' ? 'selected' : '' }}>
+                                Public - Visible to everyone
+                            </option>
+                            <option value="authenticated" {{ old('visibility', 'authenticated') == 'authenticated' ? 'selected' : '' }}>
+                                Authenticated - Requires login
+                            </option>
+                            <option value="hidden" {{ old('visibility') == 'hidden' ? 'selected' : '' }}>
+                                Hidden - Admin only
+                            </option>
+                        </select>
+                        <small class="text-muted">Control who can view this page</small>
+                        @error('visibility')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="mb-3">
                         <label for="content" class="form-label">Content</label>
                         <textarea class="form-control @error('content') is-invalid @enderror" 
                                   id="content" 

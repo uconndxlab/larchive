@@ -6,20 +6,28 @@ use App\Models\Exhibit;
 use App\Models\Item;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class ExhibitController extends Controller
 {
+    use AuthorizesRequests;
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
     {
-        $query = Exhibit::withCount('pages');
+        $query = Exhibit::withCount('pages')->visibleTo(Auth::user());
         
-        // Show trashed exhibits if requested
+        // Show trashed exhibits if requested (admin only)
         if ($request->get('trashed') === '1') {
-            $query->onlyTrashed();
+            /** @var \App\Models\User|null $user */
+            $user = Auth::user();
+            if ($user && $user->isAdmin()) {
+                $query->onlyTrashed();
+            }
         }
         
         $exhibits = $query->orderBy('featured', 'desc')
@@ -35,6 +43,8 @@ class ExhibitController extends Controller
      */
     public function create()
     {
+        $this->authorize('create', Exhibit::class);
+        
         return view('exhibits.create');
     }
 
@@ -43,12 +53,15 @@ class ExhibitController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorize('create', Exhibit::class);
+        
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'slug' => 'nullable|string|max:255|unique:exhibits,slug',
             'description' => 'nullable|string',
             'credits' => 'nullable|string',
             'theme' => 'nullable|string|max:50',
+            'visibility' => 'required|in:public,authenticated,hidden',
             'cover_image' => 'nullable|image|max:2048',
             'featured' => 'boolean',
             'published' => 'boolean',
@@ -91,6 +104,8 @@ class ExhibitController extends Controller
      */
     public function show(Exhibit $exhibit)
     {
+        $this->authorize('view', $exhibit);
+        
         $exhibit->load(['topLevelPages.children', 'items']);
         
         return view('exhibits.show', compact('exhibit'));
@@ -101,6 +116,8 @@ class ExhibitController extends Controller
      */
     public function edit(Exhibit $exhibit)
     {
+        $this->authorize('update', $exhibit);
+        
         return view('exhibits.edit', compact('exhibit'));
     }
 
@@ -109,12 +126,15 @@ class ExhibitController extends Controller
      */
     public function update(Request $request, Exhibit $exhibit)
     {
+        $this->authorize('update', $exhibit);
+        
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'slug' => ['required', 'string', 'max:255', Rule::unique('exhibits')->ignore($exhibit->id)],
             'description' => 'nullable|string',
             'credits' => 'nullable|string',
             'theme' => 'nullable|string|max:50',
+            'visibility' => 'required|in:public,authenticated,hidden',
             'cover_image' => 'nullable|image|max:2048',
             'featured' => 'boolean',
             'sort_order' => 'nullable|integer',
@@ -124,8 +144,8 @@ class ExhibitController extends Controller
         // Handle cover image upload
         if ($request->hasFile('cover_image')) {
             // Delete old cover image if it exists
-            if ($exhibit->cover_image && \Storage::disk('public')->exists($exhibit->cover_image)) {
-                \Storage::disk('public')->delete($exhibit->cover_image);
+            if ($exhibit->cover_image && Storage::disk('public')->exists($exhibit->cover_image)) {
+                Storage::disk('public')->delete($exhibit->cover_image);
             }
             
             $path = $request->file('cover_image')->store('exhibits', 'public');
@@ -149,9 +169,11 @@ class ExhibitController extends Controller
      */
     public function destroy(Exhibit $exhibit)
     {
+        $this->authorize('delete', $exhibit);
+        
         // Delete cover image if it exists
-        if ($exhibit->cover_image && \Storage::disk('public')->exists($exhibit->cover_image)) {
-            \Storage::disk('public')->delete($exhibit->cover_image);
+        if ($exhibit->cover_image && Storage::disk('public')->exists($exhibit->cover_image)) {
+            Storage::disk('public')->delete($exhibit->cover_image);
         }
 
         $exhibit->delete();
@@ -180,8 +202,8 @@ class ExhibitController extends Controller
         $exhibit = Exhibit::onlyTrashed()->findOrFail($id);
         
         // Delete cover image if it exists
-        if ($exhibit->cover_image && \Storage::disk('public')->exists($exhibit->cover_image)) {
-            \Storage::disk('public')->delete($exhibit->cover_image);
+        if ($exhibit->cover_image && Storage::disk('public')->exists($exhibit->cover_image)) {
+            Storage::disk('public')->delete($exhibit->cover_image);
         }
 
         $exhibit->forceDelete();

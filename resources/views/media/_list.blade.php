@@ -1,4 +1,12 @@
 <div id="media-list">
+    {{-- Show upload error if present --}}
+    @if(session('uploadError') ?? $uploadError ?? null)
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ session('uploadError') ?? $uploadError }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+    
     @if($item->media->isEmpty())
         <div class="alert alert-info">
             <i class="bi bi-info-circle"></i> No media files attached yet.

@@ -8,16 +8,19 @@ use App\Models\Concerns\DublinCore;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class ItemController extends Controller
 {
+    use AuthorizesRequests;
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $query = Item::with('collection');
+        $query = Item::with('collection')->visibleTo(Auth::user());
 
         if (request('search')) {
             $query->where('title', 'like', '%' . request('search') . '%');
@@ -42,6 +45,8 @@ class ItemController extends Controller
      */
     public function create()
     {
+        $this->authorize('create', Item::class);
+        
         $collections = Collection::orderBy('title')->get();
         return view('items.create', compact('collections'));
     }
@@ -60,12 +65,15 @@ class ItemController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorize('create', Item::class);
+        
         $validated = $request->validate([
             'collection_id' => 'nullable|exists:collections,id',
             'item_type' => ['required', Rule::in(['audio', 'video', 'image', 'document', 'other'])],
             'title' => 'required|string|max:255',
             'slug' => 'nullable|string|max:255|unique:items,slug',
             'description' => 'nullable|string',
+            'visibility' => 'required|in:public,authenticated,hidden',
             'extra' => 'nullable|json',
             'publish_now' => 'nullable|boolean',
             // Transcript upload (optional, for audio/video types)
@@ -114,6 +122,8 @@ class ItemController extends Controller
      */
     public function show(Item $item)
     {
+        $this->authorize('view', $item);
+        
         $item->load(['collection', 'media', 'metadata']);
         return view('items.show', compact('item'));
     }
@@ -123,6 +133,8 @@ class ItemController extends Controller
      */
     public function edit(Item $item)
     {
+        $this->authorize('update', $item);
+        
         $collections = Collection::orderBy('title')->get();
         return view('items.edit', compact('item', 'collections'));
     }
@@ -132,12 +144,15 @@ class ItemController extends Controller
      */
     public function update(Request $request, Item $item)
     {
+        $this->authorize('update', $item);
+        
         $validated = $request->validate([
             'collection_id' => 'nullable|exists:collections,id',
             'item_type' => ['required', Rule::in(['audio', 'video', 'image', 'document', 'other'])],
             'title' => 'required|string|max:255',
             'slug' => 'nullable|string|max:255|unique:items,slug,' . $item->id,
             'description' => 'nullable|string',
+            'visibility' => 'required|in:public,authenticated,hidden',
             'extra' => 'nullable|json',
             'publish_now' => 'nullable|boolean',
             // Transcript upload (optional, for audio/video types)
@@ -229,6 +244,8 @@ class ItemController extends Controller
      */
     public function destroy(Item $item)
     {
+        $this->authorize('delete', $item);
+        
         $item->delete();
 
         return redirect()->route('items.index')

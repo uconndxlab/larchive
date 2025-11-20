@@ -104,6 +104,30 @@
                 </div>
 
                 <div class="mb-3">
+                    <label for="visibility" class="form-label">Visibility <span class="text-danger">*</span></label>
+                    <select 
+                        class="form-select @error('visibility') is-invalid @enderror" 
+                        id="visibility" 
+                        name="visibility" 
+                        required
+                    >
+                        <option value="public" {{ old('visibility', $exhibit->visibility ?? 'authenticated') == 'public' ? 'selected' : '' }}>
+                            Public - Visible to everyone
+                        </option>
+                        <option value="authenticated" {{ old('visibility', $exhibit->visibility ?? 'authenticated') == 'authenticated' ? 'selected' : '' }}>
+                            Authenticated - Requires login
+                        </option>
+                        <option value="hidden" {{ old('visibility', $exhibit->visibility ?? 'authenticated') == 'hidden' ? 'selected' : '' }}>
+                            Hidden - Admin only
+                        </option>
+                    </select>
+                    <small class="text-muted">Control who can view this exhibit</small>
+                    @error('visibility')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="mb-3">
                     <div class="form-check form-switch">
                         <input class="form-check-input" 
                                type="checkbox" 

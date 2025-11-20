@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use App\Models\User;
 
 class ExhibitPage extends Model
 {
@@ -12,6 +14,7 @@ class ExhibitPage extends Model
         'parent_id',
         'title',
         'slug',
+        'visibility',
         'content',
         'layout_blocks',
         'sort_order',
@@ -106,5 +109,24 @@ class ExhibitPage extends Model
         }
         
         return $breadcrumb;
+    }
+
+    /**
+     * Scope exhibit pages visible to a given user.
+     */
+    public function scopeVisibleTo(Builder $query, ?User $user): Builder
+    {
+        // Admins see everything
+        if ($user && $user->isAdmin()) {
+            return $query;
+        }
+
+        // Authenticated users see public and authenticated
+        if ($user) {
+            return $query->whereIn('visibility', ['public', 'authenticated']);
+        }
+
+        // Guests see only public
+        return $query->where('visibility', 'public');
     }
 }

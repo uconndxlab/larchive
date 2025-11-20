@@ -9,9 +9,25 @@
         <form hx-post="/items/{{ $item->id }}/media" 
               hx-target="#media-list" 
               hx-swap="outerHTML"
-              enctype="multipart/form-data"
-              class="mb-4">
+              hx-encoding="multipart/form-data"
+              hx-indicator=".upload-progress"
+              class="mb-4"
+              id="media-upload-form">
             @csrf
+            
+            {{-- Error display container --}}
+            <div id="upload-errors" class="alert alert-danger d-none mb-3"></div>
+            
+            {{-- Show validation errors if any --}}
+            @if($errors->any())
+                <div class="alert alert-danger">
+                    <ul class="mb-0">
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
             
             <div class="row g-3">
                 <div class="col-md-8">
@@ -47,7 +63,7 @@
             </div>
 
             {{-- Upload progress indicator --}}
-            <div class="htmx-indicator mt-3">
+            <div class="upload-progress htmx-indicator mt-3">
                 <div class="progress">
                     <div class="progress-bar progress-bar-striped progress-bar-animated" 
                          role="progressbar" 
@@ -57,6 +73,31 @@
                 </div>
             </div>
         </form>
+
+        <script>
+            // Handle HTMX validation errors (422 responses)
+            document.getElementById('media-upload-form')?.addEventListener('htmx:responseError', function(evt) {
+                if (evt.detail.xhr.status === 422) {
+                    const response = JSON.parse(evt.detail.xhr.responseText);
+                    const errorDiv = document.getElementById('upload-errors');
+                    const errorMessages = Object.values(response.errors).flat();
+                    
+                    errorDiv.innerHTML = '<ul class="mb-0">' + 
+                        errorMessages.map(msg => '<li>' + msg + '</li>').join('') + 
+                        '</ul>';
+                    errorDiv.classList.remove('d-none');
+                    
+                    // Scroll to errors
+                    errorDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            });
+
+            // Clear errors on successful upload
+            document.getElementById('media-upload-form')?.addEventListener('htmx:afterSwap', function() {
+                const errorDiv = document.getElementById('upload-errors');
+                errorDiv?.classList.add('d-none');
+            });
+        </script>
 
         <hr>
 

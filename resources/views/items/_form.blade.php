@@ -202,6 +202,30 @@
 </div>
 
 <div class="mb-3">
+    <label for="visibility" class="form-label">Visibility <span class="text-danger">*</span></label>
+    <select 
+        class="form-select @error('visibility') is-invalid @enderror" 
+        id="visibility" 
+        name="visibility" 
+        required
+    >
+        <option value="public" {{ old('visibility', $item->visibility ?? 'authenticated') == 'public' ? 'selected' : '' }}>
+            Public - Visible to everyone
+        </option>
+        <option value="authenticated" {{ old('visibility', $item->visibility ?? 'authenticated') == 'authenticated' ? 'selected' : '' }}>
+            Authenticated - Requires login
+        </option>
+        <option value="hidden" {{ old('visibility', $item->visibility ?? 'authenticated') == 'hidden' ? 'selected' : '' }}>
+            Hidden - Admin only
+        </option>
+    </select>
+    <div class="form-text">Control who can view this item.</div>
+    @error('visibility')
+        <div class="invalid-feedback">{{ $message }}</div>
+    @enderror
+</div>
+
+<div class="mb-3">
     <div class="form-check">
         <input 
             type="checkbox" 
