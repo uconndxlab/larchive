@@ -53,6 +53,14 @@
                                     </span>
                                 </li>
                                 <li><hr class="dropdown-divider"></li>
+                                @if(Auth::user()->isAdmin())
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('admin.site-notice.edit') }}">
+                                            <i class="bi bi-megaphone"></i> Site Notice
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                @endif
                                 <li>
                                     <form method="POST" action="{{ route('logout') }}">
                                         @csrf
@@ -80,6 +88,9 @@
 
         @yield('content')
     </div>
+
+    <!-- Site Notice Modal -->
+    @include('components.clickwrap-modal')
 
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

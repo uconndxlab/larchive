@@ -8,6 +8,7 @@ use App\Http\Controllers\MediaController;
 use App\Http\Controllers\ExhibitController;
 use App\Http\Controllers\ExhibitPageController;
 use App\Http\Controllers\ExportController;
+use App\Http\Controllers\SiteNoticeController;
 use Illuminate\Support\Facades\Route;
 
 // Authentication routes
@@ -19,6 +20,9 @@ Route::post('logout', [LoginController::class, 'logout'])->name('logout');
 Route::get('/', function () {
     return view('welcome');
 });
+
+// Public route for acknowledging the site notice
+Route::post('notice/acknowledge', [SiteNoticeController::class, 'acknowledge'])->name('notice.acknowledge');
 
 // Admin routes - require authentication and admin role
 // These MUST come before public {item}/{collection}/{exhibit} routes to avoid conflicts
@@ -83,6 +87,10 @@ Route::middleware(['auth', 'admin'])->group(function () {
     // Export routes
     Route::get('export', [ExportController::class, 'index'])->name('export.index');
     Route::post('export/omeka', [ExportController::class, 'omeka'])->name('export.omeka');
+
+    // Site Notice management
+    Route::get('admin/site-notice', [SiteNoticeController::class, 'edit'])->name('admin.site-notice.edit');
+    Route::put('admin/site-notice', [SiteNoticeController::class, 'update'])->name('admin.site-notice.update');
 });
 
 // Public browsing routes - use visibility scopes to filter content
