@@ -88,7 +88,16 @@ class ExhibitPageController extends Controller
     {
         $this->authorize('view', $page);
         
-        $page->load(['children', 'items', 'parent']);
+        // Load only published related content
+        $page->load([
+            'children' => function ($query) {
+                $query->published()->visibleTo(Auth::user());
+            },
+            'items' => function ($query) {
+                $query->published()->visibleTo(Auth::user());
+            },
+            'parent'
+        ]);
         
         return view('exhibits.pages.show', compact('exhibit', 'page'));
     }

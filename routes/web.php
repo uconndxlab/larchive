@@ -40,6 +40,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::delete('collections/{collection}', [CollectionController::class, 'destroy'])->name('collections.destroy');
 
     // Item management
+    Route::get('admin/items/workspace', [ItemController::class, 'workspace'])->name('admin.items.workspace');
     Route::get('items/create', [ItemController::class, 'create'])->name('items.create');
     Route::post('items', [ItemController::class, 'store'])->name('items.store');
     Route::get('items/{item}/edit', [ItemController::class, 'edit'])->name('items.edit');

@@ -46,8 +46,10 @@
                             <td>
                                 @if($user->role === 'admin')
                                     <span class="badge bg-danger">Admin</span>
+                                @elseif($user->role === 'curator')
+                                    <span class="badge bg-primary">Curator</span>
                                 @else
-                                    <span class="badge bg-secondary">Standard</span>
+                                    <span class="badge bg-secondary">Contributor</span>
                                 @endif
                             </td>
                             <td>{{ $user->created_at->format('M d, Y') }}</td>

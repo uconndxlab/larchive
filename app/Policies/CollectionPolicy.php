@@ -11,9 +11,10 @@ class CollectionPolicy
     /**
      * Determine whether the user can view any models.
      */
-    public function viewAny(User $user): bool
+    public function viewAny(?User $user): bool
     {
-        return false;
+        // Curators and above can access admin workspace
+        return $user && $user->isCurator();
     }
 
     /**
@@ -21,18 +22,20 @@ class CollectionPolicy
      */
     public function view(?User $user, Collection $collection): bool
     {
-        // Admins can always view
-        if ($user && $user->isAdmin()) {
+        // Admins and curators can view everything
+        if ($user && $user->isCurator()) {
             return true;
         }
 
-        // Check visibility level
-        if ($collection->visibility === 'public') {
-            return true;
-        }
+        // For published collections, check visibility
+        if ($collection->status === 'published') {
+            if ($collection->visibility === 'public') {
+                return true;
+            }
 
-        if ($collection->visibility === 'authenticated' && $user) {
-            return true;
+            if ($collection->visibility === 'authenticated' && $user) {
+                return true;
+            }
         }
 
         return false;
@@ -43,7 +46,8 @@ class CollectionPolicy
      */
     public function create(User $user): bool
     {
-        return $user->isAdmin();
+        // Only curators and admins can create collections
+        return $user->isCurator();
     }
 
     /**
@@ -51,7 +55,15 @@ class CollectionPolicy
      */
     public function update(User $user, Collection $collection): bool
     {
-        return $user->isAdmin();
+        return $user->isCurator();
+    }
+
+    /**
+     * Determine whether the user can publish/archive the collection.
+     */
+    public function publish(User $user, Collection $collection): bool
+    {
+        return $user->isCurator();
     }
 
     /**
@@ -59,7 +71,7 @@ class CollectionPolicy
      */
     public function delete(User $user, Collection $collection): bool
     {
-        return $user->isAdmin();
+        return $user->isCurator();
     }
 
     /**
@@ -67,7 +79,7 @@ class CollectionPolicy
      */
     public function restore(User $user, Collection $collection): bool
     {
-        return false;
+        return $user->isCurator();
     }
 
     /**
@@ -75,6 +87,6 @@ class CollectionPolicy
      */
     public function forceDelete(User $user, Collection $collection): bool
     {
-        return false;
+        return $user->isAdmin();
     }
 }

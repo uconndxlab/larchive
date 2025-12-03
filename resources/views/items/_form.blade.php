@@ -226,6 +226,44 @@
 </div>
 
 <div class="mb-3">
+    <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
+    <select 
+        class="form-select @error('status') is-invalid @enderror" 
+        id="status" 
+        name="status" 
+        required
+    >
+        @if(Auth::user()->isContributor() && !Auth::user()->isCurator())
+            {{-- Contributors can only use draft and in_review --}}
+            <option value="draft" {{ old('status', $item->status ?? 'draft') == 'draft' ? 'selected' : '' }}>
+                Draft - Work in progress
+            </option>
+            <option value="in_review" {{ old('status', $item->status ?? 'draft') == 'in_review' ? 'selected' : '' }}>
+                In Review - Ready for curator review
+            </option>
+        @else
+            {{-- Curators and admins have full access --}}
+            <option value="draft" {{ old('status', $item->status ?? 'draft') == 'draft' ? 'selected' : '' }}>
+                Draft - Work in progress
+            </option>
+            <option value="in_review" {{ old('status', $item->status ?? 'draft') == 'in_review' ? 'selected' : '' }}>
+                In Review - Ready for curator review
+            </option>
+            <option value="published" {{ old('status', $item->status ?? 'draft') == 'published' ? 'selected' : '' }}>
+                Published - Visible according to visibility settings
+            </option>
+            <option value="archived" {{ old('status', $item->status ?? 'draft') == 'archived' ? 'selected' : '' }}>
+                Archived - Not normally shown
+            </option>
+        @endif
+    </select>
+    <div class="form-text">Content workflow status.</div>
+    @error('status')
+        <div class="invalid-feedback">{{ $message }}</div>
+    @enderror
+</div>
+
+<div class="mb-3">
     <div class="form-check">
         <input 
             type="checkbox" 

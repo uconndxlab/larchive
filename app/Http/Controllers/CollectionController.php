@@ -17,7 +17,7 @@ class CollectionController extends Controller
      */
     public function index()
     {
-        $query = Collection::visibleTo(Auth::user());
+        $query = Collection::published()->visibleTo(Auth::user());
 
         if (request('search')) {
             $query->where('title', 'like', '%' . request('search') . '%');
@@ -78,7 +78,10 @@ class CollectionController extends Controller
     {
         $this->authorize('view', $collection);
         
-        $collection->load('items');
+        // Load only published items for public view
+        $collection->load(['items' => function ($query) {
+            $query->published()->visibleTo(Auth::user());
+        }]);
         return view('collections.show', compact('collection'));
     }
 

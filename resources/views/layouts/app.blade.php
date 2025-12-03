@@ -64,6 +64,15 @@
                                             <i class="bi bi-people"></i> Users
                                         </a>
                                     </li>
+                                @endif
+                                @if(Auth::user()->isContributor())
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('admin.items.workspace') }}">
+                                            <i class="bi bi-briefcase"></i> Items Workspace
+                                        </a>
+                                    </li>
+                                @endif
+                                @if(Auth::user()->isAdmin())
                                     <li>
                                         <a class="dropdown-item" href="{{ route('admin.taxonomies.index') }}">
                                             <i class="bi bi-tags"></i> Taxonomies

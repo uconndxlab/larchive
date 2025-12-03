@@ -188,20 +188,23 @@ class TermController extends Controller
 
         $user = Auth::user();
 
-        // Get all items with this term, respecting visibility
+        // Get all items with this term, only published and respecting visibility
         $items = $term->items()
+            ->published()
             ->visibleTo($user)
             ->with('collection', 'media')
             ->paginate(20, ['*'], 'items_page');
 
-        // Get all collections with this term
+        // Get all collections with this term, only published
         $collections = $term->collections()
+            ->published()
             ->visibleTo($user)
             ->withCount('items')
             ->paginate(20, ['*'], 'collections_page');
 
-        // Get all exhibits with this term
+        // Get all exhibits with this term, only published
         $exhibits = $term->exhibits()
+            ->published()
             ->visibleTo($user)
             ->paginate(20, ['*'], 'exhibits_page');
 

@@ -58,10 +58,18 @@ class User extends Authenticatable
     }
 
     /**
-     * Check if user is a standard user.
+     * Check if user has curator or admin role.
      */
-    public function isStandard(): bool
+    public function isCurator(): bool
     {
-        return $this->role === 'standard';
+        return in_array($this->role, ['admin', 'curator']);
+    }
+
+    /**
+     * Check if user has contributor, curator, or admin role.
+     */
+    public function isContributor(): bool
+    {
+        return in_array($this->role, ['admin', 'curator', 'contributor']);
     }
 }

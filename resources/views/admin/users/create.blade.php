@@ -50,7 +50,8 @@
                             name="role" 
                             required
                         >
-                            <option value="standard" {{ old('role') === 'standard' ? 'selected' : '' }}>Standard</option>
+                            <option value="contributor" {{ old('role') === 'contributor' ? 'selected' : '' }}>Contributor</option>
+                            <option value="curator" {{ old('role') === 'curator' ? 'selected' : '' }}>Curator</option>
                             <option value="admin" {{ old('role') === 'admin' ? 'selected' : '' }}>Admin</option>
                         </select>
                         @error('role')

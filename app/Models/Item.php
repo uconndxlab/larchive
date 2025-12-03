@@ -27,6 +27,7 @@ class Item extends Model
         'title',
         'slug',
         'visibility',
+        'status',
         'description',
         'published_at',
         'extra',
@@ -171,5 +172,21 @@ class Item extends Model
 
         // Guests see only public
         return $query->where('visibility', 'public');
+    }
+
+    /**
+     * Scope items by status.
+     */
+    public function scopeWithStatus(Builder $query, string $status): Builder
+    {
+        return $query->where('status', $status);
+    }
+
+    /**
+     * Scope to only published items.
+     */
+    public function scopePublished(Builder $query): Builder
+    {
+        return $query->where('status', 'published');
     }
 }

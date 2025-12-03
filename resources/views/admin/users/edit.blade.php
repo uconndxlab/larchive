@@ -51,7 +51,8 @@
                             name="role" 
                             required
                         >
-                            <option value="standard" {{ old('role', $user->role) === 'standard' ? 'selected' : '' }}>Standard</option>
+                            <option value="contributor" {{ old('role', $user->role) === 'contributor' ? 'selected' : '' }}>Contributor</option>
+                            <option value="curator" {{ old('role', $user->role) === 'curator' ? 'selected' : '' }}>Curator</option>
                             <option value="admin" {{ old('role', $user->role) === 'admin' ? 'selected' : '' }}>Admin</option>
                         </select>
                         @error('role')

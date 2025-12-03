@@ -18,7 +18,7 @@ class CreateUser extends Command
                             {--name= : The name of the user}
                             {--email= : The email address of the user}
                             {--password= : The password for the user}
-                            {--role=standard : The role of the user (standard or admin)}';
+                            {--role=contributor : The role of the user (contributor, curator, or admin)}';
 
     /**
      * The console command description.
@@ -68,7 +68,7 @@ class CreateUser extends Command
         // Get role
         $role = $this->choice(
             'User role',
-            ['standard', 'admin'],
+            ['contributor', 'curator', 'admin'],
             0
         );
 
@@ -128,7 +128,7 @@ class CreateUser extends Command
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|unique:users,email',
                 'password' => 'required|min:8',
-                'role' => 'required|in:standard,admin',
+                'role' => 'required|in:contributor,curator,admin',
             ]
         );
 

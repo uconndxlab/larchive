@@ -46,7 +46,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:8|confirmed',
-            'role' => 'required|in:standard,admin',
+            'role' => 'required|in:contributor,curator,admin',
         ]);
 
         $user = User::create([
@@ -82,7 +82,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => ['required', 'email', Rule::unique('users')->ignore($user->id)],
             'password' => 'nullable|min:8|confirmed',
-            'role' => 'required|in:standard,admin',
+            'role' => 'required|in:contributor,curator,admin',
         ]);
 
         $user->name = $validated['name'];

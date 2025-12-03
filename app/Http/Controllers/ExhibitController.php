@@ -20,7 +20,7 @@ class ExhibitController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Exhibit::withCount('pages')->visibleTo(Auth::user());
+        $query = Exhibit::withCount('pages');
         
         // Show trashed exhibits if requested (admin only)
         if ($request->get('trashed') === '1') {
@@ -29,7 +29,12 @@ class ExhibitController extends Controller
             if ($user && $user->isAdmin()) {
                 $query->onlyTrashed();
             }
+        } else {
+            // Only show published exhibits for public view
+            $query->published();
         }
+        
+        $query->visibleTo(Auth::user());
         
         $exhibits = $query->orderBy('featured', 'desc')
             ->orderBy('sort_order')
@@ -110,7 +115,18 @@ class ExhibitController extends Controller
     {
         $this->authorize('view', $exhibit);
         
-        $exhibit->load(['topLevelPages.children', 'items']);
+        // Load only published pages and items for public view
+        $exhibit->load([
+            'topLevelPages' => function ($query) {
+                $query->published()->visibleTo(Auth::user());
+            },
+            'topLevelPages.children' => function ($query) {
+                $query->published()->visibleTo(Auth::user());
+            },
+            'items' => function ($query) {
+                $query->published()->visibleTo(Auth::user());
+            }
+        ]);
         
         return view('exhibits.show', compact('exhibit'));
     }

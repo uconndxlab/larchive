@@ -15,6 +15,7 @@ class ExhibitPage extends Model
         'title',
         'slug',
         'visibility',
+        'status',
         'content',
         'layout_blocks',
         'sort_order',
@@ -140,5 +141,21 @@ class ExhibitPage extends Model
 
         // Guests see only public
         return $query->where('visibility', 'public');
+    }
+
+    /**
+     * Scope pages by status.
+     */
+    public function scopeWithStatus(Builder $query, string $status): Builder
+    {
+        return $query->where('status', $status);
+    }
+
+    /**
+     * Scope to only published pages.
+     */
+    public function scopePublished(Builder $query): Builder
+    {
+        return $query->where('status', 'published');
     }
 }

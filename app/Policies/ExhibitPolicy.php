@@ -11,9 +11,10 @@ class ExhibitPolicy
     /**
      * Determine whether the user can view any models.
      */
-    public function viewAny(User $user): bool
+    public function viewAny(?User $user): bool
     {
-        return false;
+        // Curators and above can access admin workspace
+        return $user && $user->isCurator();
     }
 
     /**
@@ -21,18 +22,20 @@ class ExhibitPolicy
      */
     public function view(?User $user, Exhibit $exhibit): bool
     {
-        // Admins can always view
-        if ($user && $user->isAdmin()) {
+        // Admins and curators can view everything
+        if ($user && $user->isCurator()) {
             return true;
         }
 
-        // Check visibility level
-        if ($exhibit->visibility === 'public') {
-            return true;
-        }
+        // For published exhibits, check visibility
+        if ($exhibit->status === 'published') {
+            if ($exhibit->visibility === 'public') {
+                return true;
+            }
 
-        if ($exhibit->visibility === 'authenticated' && $user) {
-            return true;
+            if ($exhibit->visibility === 'authenticated' && $user) {
+                return true;
+            }
         }
 
         return false;
@@ -43,7 +46,8 @@ class ExhibitPolicy
      */
     public function create(User $user): bool
     {
-        return $user->isAdmin();
+        // Only curators and admins can create exhibits
+        return $user->isCurator();
     }
 
     /**
@@ -51,7 +55,15 @@ class ExhibitPolicy
      */
     public function update(User $user, Exhibit $exhibit): bool
     {
-        return $user->isAdmin();
+        return $user->isCurator();
+    }
+
+    /**
+     * Determine whether the user can publish/archive the exhibit.
+     */
+    public function publish(User $user, Exhibit $exhibit): bool
+    {
+        return $user->isCurator();
     }
 
     /**
@@ -59,7 +71,7 @@ class ExhibitPolicy
      */
     public function delete(User $user, Exhibit $exhibit): bool
     {
-        return $user->isAdmin();
+        return $user->isCurator();
     }
 
     /**
@@ -67,7 +79,7 @@ class ExhibitPolicy
      */
     public function restore(User $user, Exhibit $exhibit): bool
     {
-        return false;
+        return $user->isCurator();
     }
 
     /**
@@ -75,6 +87,6 @@ class ExhibitPolicy
      */
     public function forceDelete(User $user, Exhibit $exhibit): bool
     {
-        return false;
+        return $user->isAdmin();
     }
 }

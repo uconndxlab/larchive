@@ -16,6 +16,7 @@ class Exhibit extends Model
         'title',
         'slug',
         'visibility',
+        'status',
         'description',
         'credits',
         'theme',
@@ -90,8 +91,12 @@ class Exhibit extends Model
     
     public function scopePublished($query)
     {
-        return $query->whereNotNull('published_at')
-            ->where('published_at', '<=', now());
+        return $query->where('status', 'published');
+    }
+
+    public function scopeWithStatus(Builder $query, string $status): Builder
+    {
+        return $query->where('status', $status);
     }
 
     public function scopeFeatured($query)

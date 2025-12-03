@@ -15,6 +15,7 @@ class Collection extends Model
         'title',
         'slug',
         'visibility',
+        'status',
         'description',
         'published_at',
     ];
@@ -57,5 +58,21 @@ class Collection extends Model
 
         // Guests see only public
         return $query->where('visibility', 'public');
+    }
+
+    /**
+     * Scope collections by status.
+     */
+    public function scopeWithStatus(Builder $query, string $status): Builder
+    {
+        return $query->where('status', $status);
+    }
+
+    /**
+     * Scope to only published collections.
+     */
+    public function scopePublished(Builder $query): Builder
+    {
+        return $query->where('status', 'published');
     }
 }

@@ -16,12 +16,56 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 class ItemController extends Controller
 {
     use AuthorizesRequests, SyncsTerms;
+    
+    /**
+     * Display the admin workspace for items with status filtering.
+     */
+    public function workspace()
+    {
+        $this->authorize('viewAny', Item::class);
+
+        $status = request('status', 'draft');
+        $query = Item::with('collection');
+
+        // Filter by status
+        if (in_array($status, ['draft', 'in_review', 'published', 'archived'])) {
+            $query->withStatus($status);
+        }
+
+        // Search filter
+        if (request('search')) {
+            $query->where('title', 'like', '%' . request('search') . '%');
+        }
+
+        // Collection filter
+        if (request('collection_id')) {
+            $query->where('collection_id', request('collection_id'));
+        }
+
+        $items = $query->latest()->paginate(20)->appends(request()->query());
+
+        // Get collection options for filter
+        $collections = Collection::orderBy('title')->get();
+
+        // Count items by status for tabs
+        $statusCounts = [
+            'draft' => Item::where('status', 'draft')->count(),
+            'in_review' => Item::where('status', 'in_review')->count(),
+            'published' => Item::where('status', 'published')->count(),
+            'archived' => Item::where('status', 'archived')->count(),
+        ];
+
+        return view('admin.items.workspace', compact('items', 'status', 'collections', 'statusCounts'));
+    }
+    
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $query = Item::with('collection')->visibleTo(Auth::user());
+        $query = Item::with('collection')
+            ->published()  // Only show published items
+            ->visibleTo(Auth::user());
 
         if (request('search')) {
             $query->where('title', 'like', '%' . request('search') . '%');
@@ -87,6 +131,7 @@ class ItemController extends Controller
             'slug' => 'nullable|string|max:255|unique:items,slug',
             'description' => 'nullable|string',
             'visibility' => 'required|in:public,authenticated,hidden',
+            'status' => 'required|in:draft,in_review,published,archived',
             'extra' => 'nullable|json',
             'publish_now' => 'nullable|boolean',
             // Transcript upload (optional, for audio/video types)
@@ -98,6 +143,11 @@ class ItemController extends Controller
             'dc_language' => 'nullable|string|max:10',
             'dc_rights' => 'nullable|string|max:500',
         ]);
+
+        // Check if user can set this status
+        if (in_array($validated['status'], ['published', 'archived'])) {
+            $this->authorize('publish', Item::class);
+        }
 
         $validated['slug'] = $validated['slug'] ?? Str::slug($validated['title']);
         $validated['published_at'] = $request->boolean('publish_now') ? now() : null;
@@ -169,6 +219,7 @@ class ItemController extends Controller
             'slug' => 'nullable|string|max:255|unique:items,slug,' . $item->id,
             'description' => 'nullable|string',
             'visibility' => 'required|in:public,authenticated,hidden',
+            'status' => 'required|in:draft,in_review,published,archived',
             'extra' => 'nullable|json',
             'publish_now' => 'nullable|boolean',
             // Transcript upload (optional, for audio/video types)
@@ -180,6 +231,11 @@ class ItemController extends Controller
             'dc_language' => 'nullable|string|max:10',
             'dc_rights' => 'nullable|string|max:500',
         ]);
+
+        // Check if user can change status to published/archived
+        if (in_array($validated['status'], ['published', 'archived']) && $item->status !== $validated['status']) {
+            $this->authorize('publish', $item);
+        }
 
         $validated['slug'] = $validated['slug'] ?? Str::slug($validated['title']);
         $validated['published_at'] = $request->boolean('publish_now') ? now() : null;
