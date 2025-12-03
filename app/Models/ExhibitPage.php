@@ -73,6 +73,18 @@ class ExhibitPage extends Model
             ->orderByPivot('sort_order');
     }
 
+    public function terms()
+    {
+        return $this->morphToMany(Term::class, 'termable')
+            ->withTimestamps()
+            ->with('taxonomy');
+    }
+
+    public function tags()
+    {
+        return $this->terms()->whereHas('taxonomy', fn ($q) => $q->where('key', 'tags'));
+    }
+
     // Helper Methods
     
     public function isTopLevel(): bool

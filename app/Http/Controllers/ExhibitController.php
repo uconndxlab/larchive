@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Exhibit;
 use App\Models\Item;
+use App\Http\Controllers\Concerns\SyncsTerms;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
@@ -13,7 +14,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class ExhibitController extends Controller
 {
-    use AuthorizesRequests;
+    use AuthorizesRequests, SyncsTerms;
     /**
      * Display a listing of the resource.
      */
@@ -95,6 +96,9 @@ class ExhibitController extends Controller
 
         $exhibit = Exhibit::create($validated);
 
+        // Sync taxonomy terms
+        $this->syncTerms($exhibit, $request);
+
         return redirect()->route('exhibits.show', $exhibit)
             ->with('success', 'Exhibit created successfully.');
     }
@@ -159,6 +163,9 @@ class ExhibitController extends Controller
         unset($validated['published']);
 
         $exhibit->update($validated);
+
+        // Sync taxonomy terms
+        $this->syncTerms($exhibit, $request);
 
         return redirect()->route('exhibits.show', $exhibit)
             ->with('success', 'Exhibit updated successfully.');

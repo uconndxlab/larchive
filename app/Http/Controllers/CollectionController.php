@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Collection;
+use App\Http\Controllers\Concerns\SyncsTerms;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
@@ -10,7 +11,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class CollectionController extends Controller
 {
-    use AuthorizesRequests;
+    use AuthorizesRequests, SyncsTerms;
     /**
      * Display a listing of the resource.
      */
@@ -61,7 +62,10 @@ class CollectionController extends Controller
         $validated['published_at'] = $request->boolean('publish_now') ? now() : null;
         unset($validated['publish_now']);
 
-        Collection::create($validated);
+        $collection = Collection::create($validated);
+
+        // Sync taxonomy terms
+        $this->syncTerms($collection, $request);
 
         return redirect()->route('collections.index')
             ->with('success', 'Collection created successfully.');
@@ -108,6 +112,9 @@ class CollectionController extends Controller
         unset($validated['publish_now']);
 
         $collection->update($validated);
+
+        // Sync taxonomy terms
+        $this->syncTerms($collection, $request);
 
         return redirect()->route('collections.index')
             ->with('success', 'Collection updated successfully.');

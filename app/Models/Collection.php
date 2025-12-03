@@ -28,6 +28,18 @@ class Collection extends Model
         return $this->hasMany(Item::class);
     }
 
+    public function terms()
+    {
+        return $this->morphToMany(Term::class, 'termable')
+            ->withTimestamps()
+            ->with('taxonomy');
+    }
+
+    public function tags()
+    {
+        return $this->terms()->whereHas('taxonomy', fn ($q) => $q->where('key', 'tags'));
+    }
+
     /**
      * Scope collections visible to a given user.
      */

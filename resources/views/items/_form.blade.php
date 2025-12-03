@@ -241,3 +241,5 @@
     </div>
     <div class="form-text">Check to make this item publicly visible.</div>
 </div>
+
+@include('partials._taxonomy_selector', ['resource' => $item ?? null])

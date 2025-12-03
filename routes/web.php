@@ -9,6 +9,8 @@ use App\Http\Controllers\ExhibitController;
 use App\Http\Controllers\ExhibitPageController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\SiteNoticeController;
+use App\Http\Controllers\TaxonomyController;
+use App\Http\Controllers\TermController;
 use Illuminate\Support\Facades\Route;
 
 // Authentication routes
@@ -91,6 +93,22 @@ Route::middleware(['auth', 'admin'])->group(function () {
     // Site Notice management
     Route::get('admin/site-notice', [SiteNoticeController::class, 'edit'])->name('admin.site-notice.edit');
     Route::put('admin/site-notice', [SiteNoticeController::class, 'update'])->name('admin.site-notice.update');
+
+    // Taxonomy management
+    Route::get('admin/taxonomies', [TaxonomyController::class, 'index'])->name('admin.taxonomies.index');
+    Route::get('admin/taxonomies/create', [TaxonomyController::class, 'create'])->name('admin.taxonomies.create');
+    Route::post('admin/taxonomies', [TaxonomyController::class, 'store'])->name('admin.taxonomies.store');
+    Route::get('admin/taxonomies/{taxonomy}/edit', [TaxonomyController::class, 'edit'])->name('admin.taxonomies.edit');
+    Route::put('admin/taxonomies/{taxonomy}', [TaxonomyController::class, 'update'])->name('admin.taxonomies.update');
+    Route::delete('admin/taxonomies/{taxonomy}', [TaxonomyController::class, 'destroy'])->name('admin.taxonomies.destroy');
+
+    // Term management (per taxonomy)
+    Route::get('admin/taxonomies/{taxonomy}/terms', [TermController::class, 'index'])->name('admin.terms.index');
+    Route::get('admin/taxonomies/{taxonomy}/terms/create', [TermController::class, 'create'])->name('admin.terms.create');
+    Route::post('admin/taxonomies/{taxonomy}/terms', [TermController::class, 'store'])->name('admin.terms.store');
+    Route::get('admin/taxonomies/{taxonomy}/terms/{term}/edit', [TermController::class, 'edit'])->name('admin.terms.edit');
+    Route::put('admin/taxonomies/{taxonomy}/terms/{term}', [TermController::class, 'update'])->name('admin.terms.update');
+    Route::delete('admin/taxonomies/{taxonomy}/terms/{term}', [TermController::class, 'destroy'])->name('admin.terms.destroy');
 });
 
 // Public browsing routes - use visibility scopes to filter content
@@ -103,3 +121,5 @@ Route::get('exhibits', [ExhibitController::class, 'index'])->name('exhibits.inde
 Route::get('exhibits/{exhibit}', [ExhibitController::class, 'show'])->name('exhibits.show');
 Route::get('exhibits/{exhibit}/pages/{page}', [ExhibitPageController::class, 'show'])->name('exhibits.pages.show');
 
+// Public term browsing
+Route::get('taxonomies/{taxonomy}/{term}', [TermController::class, 'show'])->name('terms.show');

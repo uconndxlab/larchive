@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Item;
 use App\Models\Collection;
 use App\Models\Concerns\DublinCore;
+use App\Http\Controllers\Concerns\SyncsTerms;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
@@ -14,7 +15,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class ItemController extends Controller
 {
-    use AuthorizesRequests;
+    use AuthorizesRequests, SyncsTerms;
     /**
      * Display a listing of the resource.
      */
@@ -113,6 +114,9 @@ class ItemController extends Controller
         // Save Dublin Core metadata
         $this->saveDublinCoreMetadata($item, $request);
 
+        // Sync taxonomy terms
+        $this->syncTerms($item, $request);
+
         return redirect()->route('items.edit', $item)
             ->with('success', 'Item created successfully. You can now add media files.');
     }
@@ -199,6 +203,9 @@ class ItemController extends Controller
 
         // Save Dublin Core metadata
         $this->saveDublinCoreMetadata($item, $request);
+
+        // Sync taxonomy terms
+        $this->syncTerms($item, $request);
 
         return redirect()->route('items.edit', $item)
             ->with('success', 'Item updated successfully.');

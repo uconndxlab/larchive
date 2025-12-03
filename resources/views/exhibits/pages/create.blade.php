@@ -127,6 +127,8 @@
                 </div>
             </div>
 
+            @include('partials._taxonomy_selector', ['resource' => null])
+
             <div class="alert alert-light border">
                 <h6 class="alert-heading">
                     <i class="bi bi-lightbulb"></i>

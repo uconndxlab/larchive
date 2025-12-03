@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Exhibit;
 use App\Models\ExhibitPage;
 use App\Models\Item;
+use App\Http\Controllers\Concerns\SyncsTerms;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
@@ -13,7 +14,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class ExhibitPageController extends Controller
 {
-    use AuthorizesRequests;
+    use AuthorizesRequests, SyncsTerms;
     /**
      * Display a listing of pages for an exhibit.
      */
@@ -73,6 +74,9 @@ class ExhibitPageController extends Controller
 
         $page = ExhibitPage::create($validated);
 
+        // Sync taxonomy terms
+        $this->syncTerms($page, $request);
+
         return redirect()->route('exhibits.pages.show', [$exhibit, $page])
             ->with('success', 'Page created successfully.');
     }
@@ -124,6 +128,9 @@ class ExhibitPageController extends Controller
         ]);
 
         $page->update($validated);
+
+        // Sync taxonomy terms
+        $this->syncTerms($page, $request);
 
         return redirect()->route('exhibits.pages.show', [$exhibit, $page])
             ->with('success', 'Page updated successfully.');

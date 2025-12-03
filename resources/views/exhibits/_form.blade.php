@@ -187,5 +187,7 @@
                 </div>
             </div>
         </div>
+
+        @include('partials._taxonomy_selector', ['resource' => $exhibit ?? null])
     </div>
 </div>

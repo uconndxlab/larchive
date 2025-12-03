@@ -74,6 +74,18 @@ class Exhibit extends Model
             ->orderBy('sort_order');
     }
 
+    public function terms()
+    {
+        return $this->morphToMany(Term::class, 'termable')
+            ->withTimestamps()
+            ->with('taxonomy');
+    }
+
+    public function tags()
+    {
+        return $this->terms()->whereHas('taxonomy', fn ($q) => $q->where('key', 'tags'));
+    }
+
     // Scopes
     
     public function scopePublished($query)

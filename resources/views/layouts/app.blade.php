@@ -55,6 +55,11 @@
                                 <li><hr class="dropdown-divider"></li>
                                 @if(Auth::user()->isAdmin())
                                     <li>
+                                        <a class="dropdown-item" href="{{ route('admin.taxonomies.index') }}">
+                                            <i class="bi bi-tags"></i> Taxonomies
+                                        </a>
+                                    </li>
+                                    <li>
                                         <a class="dropdown-item" href="{{ route('admin.site-notice.edit') }}">
                                             <i class="bi bi-megaphone"></i> Site Notice
                                         </a>

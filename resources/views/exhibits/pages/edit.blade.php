@@ -197,6 +197,8 @@
         </div>
     </div>
 
+    @include('partials._taxonomy_selector', ['resource' => $page])
+
     <div class="d-flex justify-content-between mt-4">
         <button type="button" class="btn btn-danger"
                 onclick="if(confirm('Are you sure you want to delete this page?')) { document.getElementById('delete-page-form').submit(); }">

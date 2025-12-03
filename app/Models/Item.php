@@ -75,6 +75,18 @@ class Item extends Model
         return $this->belongsTo(Media::class, 'transcript_id');
     }
 
+    public function terms()
+    {
+        return $this->morphToMany(Term::class, 'termable')
+            ->withTimestamps()
+            ->with('taxonomy');
+    }
+
+    public function tags()
+    {
+        return $this->terms()->whereHas('taxonomy', fn ($q) => $q->where('key', 'tags'));
+    }
+
     // --- Dublin Core Helpers ---
 
     /**
