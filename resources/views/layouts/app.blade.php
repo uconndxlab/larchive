@@ -60,6 +60,11 @@
                                 <li><hr class="dropdown-divider"></li>
                                 @if(Auth::user()->isAdmin())
                                     <li>
+                                        <a class="dropdown-item" href="{{ route('admin.users.index') }}">
+                                            <i class="bi bi-people"></i> Users
+                                        </a>
+                                    </li>
+                                    <li>
                                         <a class="dropdown-item" href="{{ route('admin.taxonomies.index') }}">
                                             <i class="bi bi-tags"></i> Taxonomies
                                         </a>

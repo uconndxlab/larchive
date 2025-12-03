@@ -14,19 +14,38 @@ class CreateUser extends Command
      *
      * @var string
      */
-    protected $signature = 'user:create';
+    protected $signature = 'user:create
+                            {--name= : The name of the user}
+                            {--email= : The email address of the user}
+                            {--password= : The password for the user}
+                            {--role=standard : The role of the user (standard or admin)}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Create a new user with prompts for all fields';
+    protected $description = 'Create a new user (interactive or with options)';
 
     /**
      * Execute the console command.
      */
     public function handle()
+    {
+        // Check if running in non-interactive mode (all options provided)
+        $nonInteractive = $this->option('name') && $this->option('email') && $this->option('password');
+
+        if ($nonInteractive) {
+            return $this->createUserNonInteractive();
+        }
+
+        return $this->createUserInteractive();
+    }
+
+    /**
+     * Create user in interactive mode.
+     */
+    protected function createUserInteractive()
     {
         $this->info('Create a new user');
         $this->newLine();
@@ -84,6 +103,50 @@ class CreateUser extends Command
             return 0;
         }
 
+        return $this->createUser($name, $email, $role, $password);
+    }
+
+    /**
+     * Create user in non-interactive mode.
+     */
+    protected function createUserNonInteractive()
+    {
+        $name = $this->option('name');
+        $email = $this->option('email');
+        $password = $this->option('password');
+        $role = $this->option('role');
+
+        // Validate inputs
+        $validator = Validator::make(
+            [
+                'name' => $name,
+                'email' => $email,
+                'password' => $password,
+                'role' => $role,
+            ],
+            [
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|unique:users,email',
+                'password' => 'required|min:8',
+                'role' => 'required|in:standard,admin',
+            ]
+        );
+
+        if ($validator->fails()) {
+            foreach ($validator->errors()->all() as $error) {
+                $this->error($error);
+            }
+            return 1;
+        }
+
+        return $this->createUser($name, $email, $role, $password);
+    }
+
+    /**
+     * Create the user in the database.
+     */
+    protected function createUser(string $name, string $email, string $role, string $password)
+    {
         // Create user
         try {
             $user = User::create([

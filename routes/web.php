@@ -11,6 +11,7 @@ use App\Http\Controllers\ExportController;
 use App\Http\Controllers\SiteNoticeController;
 use App\Http\Controllers\TaxonomyController;
 use App\Http\Controllers\TermController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\Admin\ThemeController;
 use Illuminate\Support\Facades\Route;
 
@@ -114,6 +115,14 @@ Route::middleware(['auth', 'admin'])->group(function () {
     // Theme Settings
     Route::get('admin/settings/theme', [ThemeController::class, 'edit'])->name('admin.settings.theme');
     Route::put('admin/settings/theme', [ThemeController::class, 'update'])->name('admin.settings.theme.update');
+    
+    // User Management
+    Route::get('admin/users', [UserController::class, 'index'])->name('admin.users.index');
+    Route::get('admin/users/create', [UserController::class, 'create'])->name('admin.users.create');
+    Route::post('admin/users', [UserController::class, 'store'])->name('admin.users.store');
+    Route::get('admin/users/{user}/edit', [UserController::class, 'edit'])->name('admin.users.edit');
+    Route::put('admin/users/{user}', [UserController::class, 'update'])->name('admin.users.update');
+    Route::delete('admin/users/{user}', [UserController::class, 'destroy'])->name('admin.users.destroy');
 });
 
 // Public browsing routes - use visibility scopes to filter content
