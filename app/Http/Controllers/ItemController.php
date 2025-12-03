@@ -133,7 +133,6 @@ class ItemController extends Controller
             'visibility' => 'required|in:public,authenticated,hidden',
             'status' => 'required|in:draft,in_review,published,archived',
             'extra' => 'nullable|json',
-            'publish_now' => 'nullable|boolean',
             // Transcript upload (optional, for audio/video types)
             'transcript' => 'nullable|file|mimes:txt,vtt,srt,pdf,doc,docx|max:10240',
             // Dublin Core metadata
@@ -150,8 +149,9 @@ class ItemController extends Controller
         }
 
         $validated['slug'] = $validated['slug'] ?? Str::slug($validated['title']);
-        $validated['published_at'] = $request->boolean('publish_now') ? now() : null;
-        unset($validated['publish_now']);
+        
+        // Set published_at based on status
+        $validated['published_at'] = $validated['status'] === 'published' ? now() : null;
 
         $item = Item::create($validated);
 
@@ -221,7 +221,6 @@ class ItemController extends Controller
             'visibility' => 'required|in:public,authenticated,hidden',
             'status' => 'required|in:draft,in_review,published,archived',
             'extra' => 'nullable|json',
-            'publish_now' => 'nullable|boolean',
             // Transcript upload (optional, for audio/video types)
             'transcript' => 'nullable|file|mimes:txt,vtt,srt,pdf,doc,docx|max:10240',
             // Dublin Core metadata
@@ -238,8 +237,16 @@ class ItemController extends Controller
         }
 
         $validated['slug'] = $validated['slug'] ?? Str::slug($validated['title']);
-        $validated['published_at'] = $request->boolean('publish_now') ? now() : null;
-        unset($validated['publish_now']);
+        
+        // Update published_at based on status transitions
+        if ($validated['status'] === 'published' && $item->status !== 'published') {
+            // Transitioning to published: set timestamp
+            $validated['published_at'] = now();
+        } elseif ($validated['status'] !== 'published') {
+            // Not published: clear timestamp
+            $validated['published_at'] = null;
+        }
+        // If already published and staying published, keep existing published_at
 
         $item->update($validated);
 

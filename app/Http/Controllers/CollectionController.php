@@ -55,12 +55,13 @@ class CollectionController extends Controller
             'slug' => 'nullable|string|max:255|unique:collections,slug',
             'description' => 'nullable|string',
             'visibility' => 'required|in:public,authenticated,hidden',
-            'publish_now' => 'nullable|boolean',
+            'status' => 'required|in:draft,in_review,published,archived',
         ]);
 
         $validated['slug'] = $validated['slug'] ?? Str::slug($validated['title']);
-        $validated['published_at'] = $request->boolean('publish_now') ? now() : null;
-        unset($validated['publish_now']);
+        
+        // Set published_at based on status
+        $validated['published_at'] = $validated['status'] === 'published' ? now() : null;
 
         $collection = Collection::create($validated);
 
@@ -107,12 +108,17 @@ class CollectionController extends Controller
             'slug' => 'nullable|string|max:255|unique:collections,slug,' . $collection->id,
             'description' => 'nullable|string',
             'visibility' => 'required|in:public,authenticated,hidden',
-            'publish_now' => 'nullable|boolean',
+            'status' => 'required|in:draft,in_review,published,archived',
         ]);
 
         $validated['slug'] = $validated['slug'] ?? Str::slug($validated['title']);
-        $validated['published_at'] = $request->boolean('publish_now') ? now() : null;
-        unset($validated['publish_now']);
+        
+        // Update published_at based on status transitions
+        if ($validated['status'] === 'published' && $collection->status !== 'published') {
+            $validated['published_at'] = now();
+        } elseif ($validated['status'] !== 'published') {
+            $validated['published_at'] = null;
+        }
 
         $collection->update($validated);
 
