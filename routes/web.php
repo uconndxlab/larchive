@@ -11,6 +11,7 @@ use App\Http\Controllers\ExportController;
 use App\Http\Controllers\SiteNoticeController;
 use App\Http\Controllers\TaxonomyController;
 use App\Http\Controllers\TermController;
+use App\Http\Controllers\Admin\ThemeController;
 use Illuminate\Support\Facades\Route;
 
 // Authentication routes
@@ -21,7 +22,7 @@ Route::post('logout', [LoginController::class, 'logout'])->name('logout');
 // Public routes - accessible to everyone, filtered by visibility
 Route::get('/', function () {
     return view('welcome');
-});
+})->name('home');
 
 // Public route for acknowledging the site notice
 Route::post('notice/acknowledge', [SiteNoticeController::class, 'acknowledge'])->name('notice.acknowledge');
@@ -109,6 +110,10 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('admin/taxonomies/{taxonomy}/terms/{term}/edit', [TermController::class, 'edit'])->name('admin.terms.edit');
     Route::put('admin/taxonomies/{taxonomy}/terms/{term}', [TermController::class, 'update'])->name('admin.terms.update');
     Route::delete('admin/taxonomies/{taxonomy}/terms/{term}', [TermController::class, 'destroy'])->name('admin.terms.destroy');
+    
+    // Theme Settings
+    Route::get('admin/settings/theme', [ThemeController::class, 'edit'])->name('admin.settings.theme');
+    Route::put('admin/settings/theme', [ThemeController::class, 'update'])->name('admin.settings.theme.update');
 });
 
 // Public browsing routes - use visibility scopes to filter content

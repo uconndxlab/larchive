@@ -1,0 +1,125 @@
+/*
+ * Sing Sing Prison Museum Theme
+ * Custom CSS overrides for the Sing Sing implementation
+ */
+
+:root {
+    --sing-sing-primary: #2c3e50;
+    --sing-sing-secondary: #8b4513;
+    --sing-sing-accent: #c9a961;
+    --sing-sing-dark: #1a252f;
+    --sing-sing-light: #ecf0f1;
+}
+
+/* Header Styling */
+.sing-sing-header {
+    background: linear-gradient(135deg, var(--sing-sing-dark) 0%, var(--sing-sing-primary) 100%);
+    border-bottom: 3px solid var(--sing-sing-accent);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.sing-sing-header .navbar-brand {
+    font-weight: 700;
+    font-size: 1.3rem;
+    letter-spacing: 0.5px;
+}
+
+/* Footer Styling */
+.sing-sing-footer {
+    background-color: var(--sing-sing-primary);
+    color: var(--sing-sing-light);
+    border-top: 3px solid var(--sing-sing-accent);
+    margin-top: 4rem;
+}
+
+/* Item Display */
+.sing-sing-item-header {
+    border-left: 4px solid var(--sing-sing-accent);
+    padding-left: 1.5rem;
+}
+
+.sing-sing-item-header h1 {
+    color: var(--sing-sing-dark);
+    font-weight: 700;
+}
+
+/* Badge Styling */
+.sing-sing-badge {
+    background-color: var(--sing-sing-secondary) !important;
+    color: white !important;
+}
+
+.sing-sing-badge-secondary {
+    background-color: var(--sing-sing-accent) !important;
+    color: var(--sing-sing-dark) !important;
+}
+
+/* Card Styling */
+.sing-sing-card {
+    border: 1px solid var(--sing-sing-accent);
+}
+
+.sing-sing-card-header {
+    background: linear-gradient(to right, var(--sing-sing-light), white);
+    border-bottom: 2px solid var(--sing-sing-accent);
+    color: var(--sing-sing-dark);
+}
+
+.sing-sing-description {
+    background-color: #faf8f3 !important;
+    border-left: 4px solid var(--sing-sing-accent) !important;
+    font-size: 1.05rem;
+    line-height: 1.6;
+}
+
+/* Typography Adjustments */
+body {
+    font-family: 'Georgia', serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* Link Colors */
+a {
+    color: var(--sing-sing-secondary);
+}
+
+a:hover {
+    color: var(--sing-sing-accent);
+}
+
+/* Button Overrides */
+.btn-primary {
+    background-color: var(--sing-sing-secondary);
+    border-color: var(--sing-sing-secondary);
+}
+
+.btn-primary:hover {
+    background-color: var(--sing-sing-dark);
+    border-color: var(--sing-sing-dark);
+}
+
+/* Alert Boxes */
+.alert-info {
+    background-color: #e8f4f8;
+    border-color: var(--sing-sing-accent);
+}
+
+/* Historical Document Aesthetic */
+.card {
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.card-header {
+    font-weight: 600;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .sing-sing-item-header {
+        padding-left: 1rem;
+        border-left-width: 3px;
+    }
+}

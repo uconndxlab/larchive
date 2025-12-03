@@ -31,14 +31,26 @@ class ItemController extends Controller
             $query->where('collection_id', request('collection_id'));
         }
 
+        // Filter by tag
+        if (request('tag_id')) {
+            $query->whereHas('terms', function($q) {
+                $q->where('terms.id', request('tag_id'));
+            });
+        }
+
         $items = $query->latest()->paginate(20);
+
+        // Get all tags for the filter dropdown
+        $tags = \App\Models\Term::whereHas('taxonomy', fn($q) => $q->where('key', 'tags'))
+            ->orderBy('name')
+            ->get();
 
         // Return partial for HTMX requests
         if (request()->header('HX-Request')) {
             return view('items._table', compact('items'));
         }
 
-        return view('items.index', compact('items'));
+        return view('items.index', compact('items', 'tags'));
     }
 
     /**
@@ -128,7 +140,7 @@ class ItemController extends Controller
     {
         $this->authorize('view', $item);
         
-        $item->load(['collection', 'media', 'metadata']);
+        $item->load(['collection', 'media', 'metadata', 'terms.taxonomy']);
         return view('items.show', compact('item'));
     }
 

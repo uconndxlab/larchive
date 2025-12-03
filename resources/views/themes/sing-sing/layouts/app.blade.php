@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ config('app.name', 'Larchive') }}</title>
+    <title>{{ config('app.name', 'Larchive') }} - Sing Sing Prison Museum</title>
     
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -18,9 +18,17 @@
     @endif
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+    {{-- Sing Sing Themed Header --}}
+    <nav class="navbar navbar-expand-lg navbar-dark sing-sing-header mb-4">
         <div class="container">
-            <a class="navbar-brand" href="/">{{ config('app.name', 'Larchive') }}</a>
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                @if(file_exists(public_path('themes/sing-sing/logo.png')))
+                    <img src="{{ asset('themes/sing-sing/logo.png') }}" alt="Sing Sing" height="40" class="me-2">
+                @else
+                    <i class="bi bi-building me-2" style="font-size: 1.5rem;"></i>
+                @endif
+                <span>{{ config('app.name', 'Sing Sing Prison Museum') }}</span>
+            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -65,13 +73,13 @@
                                         </a>
                                     </li>
                                     <li>
-                                        <a class="dropdown-item" href="{{ route('admin.site-notice.edit') }}">
-                                            <i class="bi bi-megaphone"></i> Site Notice
+                                        <a class="dropdown-item" href="{{ route('admin.settings.theme') }}">
+                                            <i class="bi bi-palette"></i> Theme Settings
                                         </a>
                                     </li>
                                     <li>
-                                        <a class="dropdown-item" href="{{ route('admin.settings.theme') }}">
-                                            <i class="bi bi-palette"></i> Theme Settings
+                                        <a class="dropdown-item" href="{{ route('admin.site-notice.edit') }}">
+                                            <i class="bi bi-megaphone"></i> Site Notice
                                         </a>
                                     </li>
                                     <li><hr class="dropdown-divider"></li>
@@ -103,6 +111,25 @@
 
         @yield('content')
     </div>
+
+    {{-- Sing Sing Themed Footer --}}
+    <footer class="sing-sing-footer mt-5 py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-0">
+                        <strong>Sing Sing Prison Museum</strong><br>
+                        <small>Preserving and sharing the history of one of America's most famous prisons.</small>
+                    </p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0">
+                        <small>&copy; {{ date('Y') }} Sing Sing Prison Museum. All rights reserved.</small>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
 
     <!-- Site Notice Modal -->
     @include('components.clickwrap-modal')

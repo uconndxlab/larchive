@@ -1,13 +1,13 @@
 @extends('layouts.app')
 
 @section('content')
-{{-- Page Header --}}
-<div class="mb-4">
+{{-- Sing Sing Themed Item Display --}}
+<div class="sing-sing-item-header mb-4">
     <div class="d-flex justify-content-between align-items-start mb-3">
         <div>
-            <h1 class="mb-2">{{ $item->title }}</h1>
-            <div class="d-flex align-items-center gap-2">
-                <span class="badge bg-{{ $item->item_type === 'audio' ? 'primary' : ($item->item_type === 'video' ? 'danger' : ($item->item_type === 'image' ? 'success' : ($item->item_type === 'document' ? 'warning' : 'secondary'))) }}">
+            <h1 class="display-6 mb-2">{{ $item->title }}</h1>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="badge sing-sing-badge">
                     @switch($item->item_type)
                         @case('audio') <i class="bi bi-music-note"></i> Audio @break
                         @case('video') <i class="bi bi-camera-video"></i> Video @break
@@ -53,7 +53,7 @@
                     <strong class="small text-muted">{{ $taxonomyName }}:</strong>
                     @foreach($terms as $term)
                         <a href="{{ route('terms.show', [$term->taxonomy, $term]) }}" 
-                           class="badge bg-secondary text-decoration-none me-1">
+                           class="badge sing-sing-badge-secondary text-decoration-none me-1">
                             {{ $term->name }}
                         </a>
                     @endforeach
@@ -63,7 +63,7 @@
     @endif
 
     @if($item->description)
-        <div class="alert alert-light border">
+        <div class="alert alert-light border sing-sing-description">
             <p class="mb-0">{{ $item->description }}</p>
         </div>
     @endif
@@ -94,12 +94,12 @@
             @include('items.partials.show_ohms')
         @endif
 
-        {{-- Metadata & Details Card --}}
-        <div class="card shadow-sm">
-            <div class="card-header bg-light">
+        {{-- Metadata & Details Card with Sing Sing Styling --}}
+        <div class="card shadow-sm sing-sing-card">
+            <div class="card-header sing-sing-card-header">
                 <h5 class="mb-0">
                     <i class="bi bi-info-circle"></i>
-                    Item Details
+                    Archival Details
                 </h5>
             </div>
             <div class="card-body">
