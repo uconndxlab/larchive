@@ -22,6 +22,15 @@ Route::post('logout', [LoginController::class, 'logout'])->name('logout');
 
 // Public routes - accessible to everyone, filtered by visibility
 Route::get('/', function () {
+    // Check for theme-specific homepage
+    try {
+        $theme = \App\Support\Theme::active();
+        if (view()->exists("themes.{$theme}.home")) {
+            return view("themes.{$theme}.home");
+        }
+    } catch (\Exception $e) {
+        // Fallback if theme system not available
+    }
     return view('welcome');
 })->name('home');
 

@@ -25,12 +25,8 @@ return new class extends Migration
                   ->after('visibility');
         });
 
-        // Add status to exhibits
-        Schema::table('exhibits', function (Blueprint $table) {
-            $table->enum('status', ['draft', 'in_review', 'published', 'archived'])
-                  ->default('draft')
-                  ->after('visibility');
-        });
+        // Status already added to exhibits in create_exhibits_table migration
+        // No need to add it again here
 
         // Add status to exhibit_pages
         Schema::table('exhibit_pages', function (Blueprint $table) {
@@ -53,9 +49,8 @@ return new class extends Migration
             $table->dropColumn('status');
         });
 
-        Schema::table('exhibits', function (Blueprint $table) {
-            $table->dropColumn('status');
-        });
+        // Status dropped in exhibits table by create_exhibits_table migration rollback
+        // No need to drop it here
 
         Schema::table('exhibit_pages', function (Blueprint $table) {
             $table->dropColumn('status');

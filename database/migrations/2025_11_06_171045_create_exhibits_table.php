@@ -15,6 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('title')->index();
             $table->string('slug')->unique();
+            $table->string('visibility')->default('public'); // public, private, authenticated
+            $table->enum('status', ['draft', 'in_review', 'published', 'archived'])->default('draft');
             $table->text('description')->nullable();
             $table->text('credits')->nullable(); // Curator, contributors, etc.
             $table->string('theme')->default('default'); // For future theming

@@ -13,7 +13,7 @@
 
 /* Header Styling */
 .sing-sing-header {
-    background: linear-gradient(135deg, var(--sing-sing-dark) 0%, var(--sing-sing-primary) 100%);
+    background: #fff;
     border-bottom: 3px solid var(--sing-sing-accent);
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
@@ -114,6 +114,61 @@ a:hover {
 
 .card-header {
     font-weight: 600;
+}
+
+/* Full Page Offcanvas Menu Styling */
+#navMenu {
+    background-color: var(--sing-sing-primary);
+}
+
+#navMenu .offcanvas-header {
+    background-color: var(--sing-sing-primary);
+    color: white;
+}
+
+#navMenu .btn-close {
+    filter: invert(1);
+}
+
+#navMenu .offcanvas-body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+#navMenu .navbar-nav {
+    width: 100%;
+}
+
+#navMenu .nav-link {
+    color: white !important;
+    font-size: 2rem;
+    padding: 1rem 0;
+    transition: all 0.3s ease;
+}
+
+#navMenu .nav-link:hover {
+    color: var(--sing-sing-accent) !important;
+    transform: scale(1.05);
+}
+
+#navMenu .text-muted {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+#navMenu .btn-link {
+    color: white !important;
+    text-decoration: none;
+    font-size: 2rem;
+}
+
+#navMenu .btn-link:hover {
+    color: var(--sing-sing-accent) !important;
+}
+
+#navMenu hr {
+    border-color: rgba(255, 255, 255, 0.2);
 }
 
 /* Responsive Adjustments */
