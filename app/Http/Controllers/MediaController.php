@@ -18,7 +18,7 @@ class MediaController extends Controller
     public function index(Item $item)
     {
         $item->load('media');
-        return view('media._list', compact('item'));
+        return view('items._media_list', compact('item'));
     }
 
     /**
@@ -31,7 +31,7 @@ class MediaController extends Controller
             if ($request->header('HX-Request')) {
                 // Return the media list with an error message for HTMX
                 $item->load('media');
-                return view('media._list', compact('item'))
+                return view('items._media_list', compact('item'))
                     ->with('uploadError', 'Please select at least one file to upload.');
             }
             
@@ -103,7 +103,7 @@ class MediaController extends Controller
         }
 
         $item->load('media');
-        return view('media._list', compact('item'));
+        return view('items._media_list', compact('item'));
     }
 
     /**
@@ -113,17 +113,54 @@ class MediaController extends Controller
     {
         $request->validate([
             'alt_text' => 'nullable|string|max:255',
+            'is_featured' => 'nullable|boolean',
+            'media_type' => 'nullable|in:main,supplemental',
+            'label' => 'nullable|string|max:255',
+            'role' => 'nullable|string|max:100',
+            'visibility' => 'nullable|in:public,authenticated,hidden',
         ]);
+
+        // If setting as featured, unfeature all other media
+        if ($request->input('is_featured')) {
+            Media::where('item_id', $media->item_id)
+                ->update(['is_featured' => false]);
+        }
+
+        // Handle metadata for supplemental files
+        $metadata = $media->metadata ?? [];
+        
+        if ($request->input('media_type') === 'supplemental') {
+            // Store supplemental metadata
+            $metadata['label'] = $request->input('label', $media->filename);
+            $metadata['role'] = $request->input('role', 'supplemental');
+            $metadata['visibility'] = $request->input('visibility', 'public');
+        } else {
+            // Switching to main - validate MIME type matches item type
+            $item = $media->item;
+            $allowedMimeTypes = $this->getAllowedMimeTypesForItemType($item->item_type);
+            $mimeCategory = explode('/', $media->mime_type)[0]; // e.g., 'image', 'audio', 'video'
+            
+            if (!in_array($mimeCategory, $allowedMimeTypes) && !in_array($media->mime_type, $allowedMimeTypes)) {
+                return response()->json([
+                    'error' => "Cannot set as main media. File type \"{$media->mime_type}\" is not compatible with item type \"{$item->item_type}\". Expected: " . implode(', ', $allowedMimeTypes) . '.'
+                ], 422);
+            }
+            
+            // Clear supplemental metadata if switching to main
+            unset($metadata['label'], $metadata['role'], $metadata['visibility']);
+        }
 
         $media->update([
             'alt_text' => $request->input('alt_text'),
+            'is_featured' => $request->input('is_featured', $media->is_featured),
+            'metadata' => $metadata,
         ]);
 
         $item = $media->item;
         $item->load('media');
 
-        // Return just the updated row
-        return view('media._row', compact('media', 'item'));
+        // Return the full media list
+        return view('items._media_list', compact('item'));
     }
 
     /**
@@ -141,7 +178,7 @@ class MediaController extends Controller
         $media->delete();
 
         $item->load('media');
-        return view('media._list', compact('item'));
+        return view('items._media_list', compact('item'));
     }
 
     /**
@@ -150,10 +187,10 @@ class MediaController extends Controller
     public function reorder(Request $request, Item $item)
     {
         $request->validate([
-            'order' => 'required|string',
+            'order' => 'required|array',
         ]);
 
-        $mediaIds = json_decode($request->input('order'), true);
+        $mediaIds = $request->input('order');
 
         foreach ($mediaIds as $index => $mediaId) {
             Media::where('id', $mediaId)
@@ -161,7 +198,22 @@ class MediaController extends Controller
                 ->update(['sort_order' => $index]);
         }
 
-        $item->load('media');
-        return view('media._list', compact('item'));
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Get allowed MIME type categories for a given item type.
+     * Returns array of allowed MIME type prefixes (e.g., 'audio', 'video', 'image').
+     */
+    private function getAllowedMimeTypesForItemType(string $itemType): array
+    {
+        return match($itemType) {
+            'audio' => ['audio'],
+            'video' => ['video'],
+            'image' => ['image'],
+            'document' => ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text'],
+            'other' => ['audio', 'video', 'image', 'application', 'text'], // Allow anything for "other"
+            default => [],
+        };
     }
 }

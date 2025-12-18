@@ -18,6 +18,81 @@
     @endif
 </head>
 <body>
+    @auth
+        @if(Auth::user()->isContributor())
+            {{-- Admin/Contributor Top Bar --}}
+            <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+                <div class="container">
+                    <span class="navbar-text me-3">
+                        <i class="bi bi-person-circle"></i>
+                        {{ Auth::user()->name }}
+                        @if(Auth::user()->isAdmin())
+                            <span class="badge bg-danger">Admin
+
+                            </span>
+                        @endif
+                    </span>
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNav">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="adminNav">
+                        <ul class="navbar-nav mx-auto">
+                            @if(Auth::user()->isContributor())
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{{ route('admin.items.workspace') }}">
+                                        <i class="bi bi-briefcase"></i> Items Workspace
+                                        @php
+                                            $draftCount = \App\Models\Item::where('status', 'draft')->count();
+                                        @endphp
+                                        @if($draftCount > 0)
+                                            <span class="badge bg-warning text-dark">{{ $draftCount }}</span>
+                                        @endif
+                                    </a>
+                                </li>
+                            @endif
+
+                            @if(Auth::user()->isAdmin())
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{{ route('admin.users.index') }}">
+                                        <i class="bi bi-people"></i> Users
+                                    </a>
+                                </li>
+                            @endif
+ 
+                            @if(Auth::user()->isAdmin())
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{{ route('admin.taxonomies.index') }}">
+                                        <i class="bi bi-tags"></i> Taxonomies
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{{ route('admin.site-notice.edit') }}">
+                                        <i class="bi bi-megaphone"></i> Site Notice
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{{ route('admin.settings.theme') }}">
+                                        <i class="bi bi-palette"></i> Theme Settings
+                                    </a>
+                                </li>
+                            @endif
+                        </ul>
+                        <ul class="navbar-nav">
+                            <li class="nav-item">
+                                <form method="POST" action="{{ route('logout') }}" class="d-inline">
+                                    @csrf
+                                    <button type="submit" class="btn btn-link nav-link">
+                                        <i class="bi bi-box-arrow-right"></i> Logout
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        @endif
+    @endauth
+
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
         <div class="container">
             <a class="navbar-brand" href="/">{{ config('app.name', 'Larchive') }}</a>
@@ -43,63 +118,31 @@
                         </a>
                     </li>
                     @auth
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="bi bi-person-circle"></i>
-                                {{ Auth::user()->name }}
-                                @if(Auth::user()->isAdmin())
-                                    <span class="badge bg-danger">Admin</span>
-                                @endif
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                                <li>
-                                    <span class="dropdown-item-text">
-                                        <small class="text-muted">{{ Auth::user()->email }}</small>
-                                    </span>
-                                </li>
-                                <li><hr class="dropdown-divider"></li>
-                                @if(Auth::user()->isAdmin())
+                        @if(!Auth::user()->isContributor())
+                            {{-- Regular users see simple dropdown --}}
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-person-circle"></i>
+                                    {{ Auth::user()->name }}
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                                     <li>
-                                        <a class="dropdown-item" href="{{ route('admin.users.index') }}">
-                                            <i class="bi bi-people"></i> Users
-                                        </a>
-                                    </li>
-                                @endif
-                                @if(Auth::user()->isContributor())
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('admin.items.workspace') }}">
-                                            <i class="bi bi-briefcase"></i> Items Workspace
-                                        </a>
-                                    </li>
-                                @endif
-                                @if(Auth::user()->isAdmin())
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('admin.taxonomies.index') }}">
-                                            <i class="bi bi-tags"></i> Taxonomies
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('admin.site-notice.edit') }}">
-                                            <i class="bi bi-megaphone"></i> Site Notice
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('admin.settings.theme') }}">
-                                            <i class="bi bi-palette"></i> Theme Settings
-                                        </a>
+                                        <span class="dropdown-item-text">
+                                            <small class="text-muted">{{ Auth::user()->email }}</small>
+                                        </span>
                                     </li>
                                     <li><hr class="dropdown-divider"></li>
-                                @endif
-                                <li>
-                                    <form method="POST" action="{{ route('logout') }}">
-                                        @csrf
-                                        <button type="submit" class="dropdown-item">
-                                            <i class="bi bi-box-arrow-right"></i> Logout
-                                        </button>
-                                    </form>
-                                </li>
-                            </ul>
-                        </li>
+                                    <li>
+                                        <form method="POST" action="{{ route('logout') }}">
+                                            @csrf
+                                            <button type="submit" class="dropdown-item">
+                                                <i class="bi bi-box-arrow-right"></i> Logout
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </li>
+                        @endif
                     @else
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('login') }}">
@@ -123,6 +166,9 @@
 
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- SortableJS for drag and drop -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     
     <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>

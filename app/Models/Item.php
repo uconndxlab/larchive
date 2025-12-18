@@ -21,6 +21,7 @@ class Item extends Model
 
     protected $fillable = [
         'collection_id',
+        'featured_image_id',
         'item_type',
         'transcript_id',
         'ohms_json',
@@ -74,6 +75,15 @@ class Item extends Model
     public function transcript()
     {
         return $this->belongsTo(Media::class, 'transcript_id');
+    }
+
+    /**
+     * Featured image (points to a Media record).
+     * Used as the primary visual representation of the item.
+     */
+    public function featuredImage()
+    {
+        return $this->belongsTo(Media::class, 'featured_image_id');
     }
 
     public function terms()
@@ -188,5 +198,50 @@ class Item extends Model
     public function scopePublished(Builder $query): Builder
     {
         return $query->where('status', 'published');
+    }
+
+    /**
+     * Get list of unattached uploads from the incoming directory.
+     * Returns array of file info: ['name' => filename, 'size' => bytes, 'modified' => timestamp]
+     */
+    public function getUnattachedUploads(): array
+    {
+        $incomingPath = storage_path("app/public/items/{$this->id}/incoming");
+        
+        if (!is_dir($incomingPath)) {
+            return [];
+        }
+
+        // Get all attached file paths for this item
+        $attachedPaths = $this->media()->pluck('path')->toArray();
+        
+        $files = [];
+        $items = scandir($incomingPath);
+        
+        foreach ($items as $item) {
+            if ($item === '.' || $item === '..') {
+                continue;
+            }
+            
+            $fullPath = $incomingPath . '/' . $item;
+            
+            if (!is_file($fullPath)) {
+                continue;
+            }
+            
+            // Check if this file is already attached
+            $relativePath = "items/{$this->id}/incoming/{$item}";
+            if (in_array($relativePath, $attachedPaths)) {
+                continue;
+            }
+            
+            $files[] = [
+                'name' => $item,
+                'size' => filesize($fullPath),
+                'modified' => filemtime($fullPath),
+            ];
+        }
+        
+        return $files;
     }
 }

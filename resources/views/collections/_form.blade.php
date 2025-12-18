@@ -50,8 +50,10 @@
     </div>
 </div>
 
+@include('items._media')
+
 {{-- Tags & Categories --}}
-<div class="card mb-4">
+<div class="card my-4">
     <div class="card-header bg-warning bg-opacity-10">
         <h6 class="mb-0">🏷️ Tags & Categories</h6>
     </div>

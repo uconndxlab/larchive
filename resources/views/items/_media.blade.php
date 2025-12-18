@@ -1,10 +1,12 @@
 <div class="card mb-4">
     <div class="card-header">
-        <h5 class="mb-0">
-            <i class="bi bi-file-earmark-image"></i> Media Files
-        </h5>
+        <h5 class="mb-0">Media Files</h5>
     </div>
     <div class="card-body">
+        <p class="text-muted small mb-3">
+            Upload media files for this item (images, audio, video, PDFs, documents). You can designate one as the featured/main file after uploading.
+        </p>
+
         {{-- Upload Form --}}
         <form hx-post="/items/{{ $item->id }}/media" 
               hx-target="#media-list" 
@@ -29,9 +31,9 @@
                 </div>
             @endif
             
-            <div class="row g-3">
-                <div class="col-md-8">
-                    <label for="files" class="form-label">Upload Files</label>
+            <div class="row g-3 align-items-end">
+                <div class="col-md-9">
+                    <label for="files" class="form-label">Select Files</label>
                     <input type="file" 
                            class="form-control" 
                            id="files" 
@@ -39,27 +41,13 @@
                            multiple 
                            required>
                     <small class="form-text text-muted">
-                        Select one or more files. Max 512MB each. Supported: images, PDFs, audio, video, documents.
+                        Max 512MB each. Supported: images, PDFs, audio, video, documents.
                     </small>
                 </div>
                 
-                <div class="col-md-4">
-                    <label for="alt_text" class="form-label">Alt Text (optional)</label>
-                    <input type="text" 
-                           class="form-control" 
-                           id="alt_text" 
-                           name="alt_text" 
-                           placeholder="Applied to all uploaded files...">
-                    <small class="form-text text-muted">
-                        You can edit individually after upload.
-                    </small>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary w-100">Upload Files</button>
                 </div>
-            </div>
-
-            <div class="mt-3">
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-cloud-upload"></i> Upload Files
-                </button>
             </div>
 
             {{-- Upload progress indicator --}}

@@ -94,99 +94,118 @@
     </div>
 </div>
 
-{{-- Items Table --}}
-<div class="card">
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>Title</th>
-                        <th>Collection</th>
-                        <th>Type</th>
-                        <th>Status</th>
-                        <th>Visibility</th>
-                        <th>Updated</th>
-                        <th class="text-end">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($items as $item)
-                        <tr>
-                            <td>
-                                <strong>{{ $item->title }}</strong>
-                            </td>
-                            <td>
-                                @if($item->collection)
-                                    {{ $item->collection->title }}
-                                @else
-                                    <span class="text-muted">—</span>
-                                @endif
-                            </td>
-                            <td>
-                                <span class="badge bg-secondary">{{ ucfirst($item->item_type) }}</span>
-                            </td>
-                            <td>
-                                @if($item->status === 'draft')
-                                    <span class="badge bg-secondary">Draft</span>
-                                @elseif($item->status === 'in_review')
-                                    <span class="badge bg-info">In Review</span>
-                                @elseif($item->status === 'published')
-                                    <span class="badge bg-success">Published</span>
-                                @else
-                                    <span class="badge bg-dark">Archived</span>
-                                @endif
-                            </td>
-                            <td>
-                                @if($item->visibility === 'public')
-                                    <span class="badge bg-success">Public</span>
-                                @elseif($item->visibility === 'authenticated')
-                                    <span class="badge bg-warning">Authenticated</span>
-                                @else
-                                    <span class="badge bg-danger">Hidden</span>
-                                @endif
-                            </td>
-                            <td>{{ $item->updated_at->diffForHumans() }}</td>
-                            <td class="text-end">
-                                <div class="btn-group btn-group-sm">
-                                    @can('view', $item)
-                                        <a href="{{ route('items.show', $item) }}" class="btn btn-outline-info" title="View">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                    @endcan
-                                    @can('update', $item)
-                                        <a href="{{ route('items.edit', $item) }}" class="btn btn-outline-secondary" title="Edit">
-                                            <i class="bi bi-pencil"></i>
-                                        </a>
-                                    @endcan
-                                    @can('delete', $item)
-                                        <form action="{{ route('items.destroy', $item) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this item?');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </form>
-                                    @endcan
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="7" class="text-center text-muted py-4">
-                                No items found with status "{{ $status }}".
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-        
-        @if($items->hasPages())
-            <div class="mt-3">
-                {{ $items->links() }}
+{{-- Items Grid --}}
+<div class="row g-4">
+    @forelse($items as $item)
+        <div class="col-md-6 col-lg-4">
+                <div class="card h-100">
+                    {{-- Thumbnail or Type Icon --}}
+                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 150px;">
+                        @if($item->media->where('is_featured', true)->first() || $item->media->first())
+                            @php
+                                $featuredMedia = $item->media->where('is_featured', true)->first() ?? $item->media->first();
+                            @endphp
+                            @if(str_starts_with($featuredMedia->mime_type, 'image/'))
+                                <img src="{{ Storage::url($featuredMedia->path) }}" 
+                                     alt="{{ $item->title }}" 
+                                     class="img-fluid" 
+                                     style="max-height: 150px; object-fit: cover; width: 100%;">
+                            @else
+                                <i class="bi bi-file-earmark fs-1 text-muted"></i>
+                            @endif
+                        @else
+                            @if($item->item_type === 'audio')
+                                <i class="bi bi-music-note-beamed fs-1 text-muted"></i>
+                            @elseif($item->item_type === 'video')
+                                <i class="bi bi-play-circle fs-1 text-muted"></i>
+                            @elseif($item->item_type === 'image')
+                                <i class="bi bi-image fs-1 text-muted"></i>
+                            @elseif($item->item_type === 'document')
+                                <i class="bi bi-file-text fs-1 text-muted"></i>
+                            @else
+                                <i class="bi bi-file-earmark fs-1 text-muted"></i>
+                            @endif
+                        @endif
+                    </div>
+
+                    <div class="card-body">
+                        <h5 class="card-title text-truncate" title="{{ $item->title }}">
+                            {{ $item->title }}
+                        </h5>
+                        
+                        @if($item->description)
+                            <p class="card-text text-muted small" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                                {{ $item->description }}
+                            </p>
+                        @endif
+
+                        <div class="mb-2">
+                            <span class="badge bg-secondary me-1">{{ ucfirst($item->item_type) }}</span>
+                            
+                            @if($item->status === 'draft')
+                                <span class="badge bg-secondary">Draft</span>
+                            @elseif($item->status === 'in_review')
+                                <span class="badge bg-info">In Review</span>
+                            @elseif($item->status === 'published')
+                                <span class="badge bg-success">Published</span>
+                            @else
+                                <span class="badge bg-dark">Archived</span>
+                            @endif
+
+                            @if($item->visibility === 'public')
+                                <span class="badge bg-success">Public</span>
+                            @elseif($item->visibility === 'authenticated')
+                                <span class="badge bg-warning text-dark">Auth</span>
+                            @else
+                                <span class="badge bg-danger">Hidden</span>
+                            @endif
+                        </div>
+
+                        <div class="small text-muted mb-3">
+                            @if($item->collection)
+                                <i class="bi bi-collection"></i> {{ $item->collection->title }}<br>
+                            @endif
+                            <i class="bi bi-clock"></i> {{ $item->updated_at->diffForHumans() }}
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            @can('update', $item)
+                                <a href="{{ route('items.edit', $item) }}" class="btn btn-primary">
+                                    <i class="bi bi-pencil"></i> Edit Item
+                                </a>
+                            @endcan
+                            <div class="btn-group">
+                                @can('view', $item)
+                                    <a href="{{ route('items.show', $item) }}" class="btn btn-outline-secondary btn-sm">
+                                        <i class="bi bi-eye"></i> View
+                                    </a>
+                                @endcan
+                                @can('delete', $item)
+                                    <form action="{{ route('items.destroy', $item) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this item?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                                            <i class="bi bi-trash"></i> Delete
+                                        </button>
+                                    </form>
+                                @endcan
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        @endif
-    </div>
+    @empty
+        <div class="col-12">
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i> No items found with status "{{ $status }}".
+            </div>
+        </div>
+    @endforelse
 </div>
+
+@if($items->hasPages())
+    <div class="mt-4">
+        {{ $items->links() }}
+    </div>
+@endif
 @endsection

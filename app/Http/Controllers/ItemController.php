@@ -114,7 +114,16 @@ class ItemController extends Controller
     public function transcriptField(Request $request)
     {
         $itemType = $request->input('item_type', 'other');
-        return view('items._transcript_upload', compact('itemType'));
+        $item = new \stdClass();
+        $item->item_type = $itemType;
+        $item->transcript = null;
+        
+        // Return empty if not audio/video
+        if (!in_array($itemType, ['audio', 'video'])) {
+            return response('', 200);
+        }
+        
+        return view('items._transcript_section', compact('item'));
     }
 
     /**
@@ -133,6 +142,8 @@ class ItemController extends Controller
             'visibility' => 'required|in:public,authenticated,hidden',
             'status' => 'required|in:draft,in_review,published,archived',
             'extra' => 'nullable|json',
+            // Featured image upload
+            'featured_image' => 'nullable|image|max:10240',
             // Transcript upload (optional, for audio/video types)
             'transcript' => 'nullable|file|mimes:txt,vtt,srt,pdf,doc,docx|max:10240',
             // Dublin Core metadata
@@ -154,6 +165,25 @@ class ItemController extends Controller
         $validated['published_at'] = $validated['status'] === 'published' ? now() : null;
 
         $item = Item::create($validated);
+
+        // Handle featured image upload
+        if ($request->hasFile('featured_image')) {
+            $file = $request->file('featured_image');
+            // Store in public disk like other media
+            $path = $file->store("items/{$item->id}/files", 'public');
+            
+            $featuredMedia = $item->media()->create([
+                'filename' => $file->getClientOriginalName(),
+                'path' => $path,
+                'mime_type' => $file->getMimeType(),
+                'size' => $file->getSize(),
+                'is_transcript' => false,
+                'sort_order' => 0,
+                'processing_status' => 'ready',
+            ]);
+
+            $item->update(['featured_image_id' => $featuredMedia->id]);
+        }
 
         // Handle transcript upload
         if ($request->hasFile('transcript') && in_array($item->item_type, ['audio', 'video'])) {
@@ -221,6 +251,10 @@ class ItemController extends Controller
             'visibility' => 'required|in:public,authenticated,hidden',
             'status' => 'required|in:draft,in_review,published,archived',
             'extra' => 'nullable|json',
+            // Featured image upload and removal
+            'featured_image' => 'nullable|image|max:10240',
+            'existing_featured_image_id' => 'nullable|exists:media,id',
+            'remove_featured_image' => 'nullable|boolean',
             // Transcript upload (optional, for audio/video types)
             'transcript' => 'nullable|file|mimes:txt,vtt,srt,pdf,doc,docx|max:10240',
             // Dublin Core metadata
@@ -249,6 +283,35 @@ class ItemController extends Controller
         // If already published and staying published, keep existing published_at
 
         $item->update($validated);
+
+        // Handle featured image removal
+        if ($request->input('remove_featured_image')) {
+            $item->update(['featured_image_id' => null]);
+        }
+
+        // Handle new featured image upload
+        if ($request->hasFile('featured_image')) {
+            $file = $request->file('featured_image');
+            // Store in public disk like other media
+            $path = $file->store("items/{$item->id}/files", 'public');
+            
+            $featuredMedia = $item->media()->create([
+                'filename' => $file->getClientOriginalName(),
+                'path' => $path,
+                'mime_type' => $file->getMimeType(),
+                'size' => $file->getSize(),
+                'is_transcript' => false,
+                'sort_order' => 0,
+                'processing_status' => 'ready',
+            ]);
+
+            $item->update(['featured_image_id' => $featuredMedia->id]);
+        }
+
+        // Handle selecting existing media as featured image
+        if ($request->input('existing_featured_image_id')) {
+            $item->update(['featured_image_id' => $request->input('existing_featured_image_id')]);
+        }
 
         // Handle new transcript upload
         if ($request->hasFile('transcript') && in_array($item->item_type, ['audio', 'video'])) {
@@ -319,6 +382,129 @@ class ItemController extends Controller
         if ($request->filled('dc_rights')) {
             $item->setDC('dc.rights', $request->input('dc_rights'));
         }
+    }
+
+    /**
+     * Attach an unattached upload from the incoming directory.
+     */
+    public function attachIncoming(Request $request, Item $item)
+    {
+        $this->authorize('update', $item);
+
+        $validated = $request->validate([
+            'filename' => 'required|string',
+            'attach_as' => 'required|in:main,supplemental',
+            'label' => 'nullable|string|max:255',
+            'role' => 'nullable|string|max:100',
+            'visibility' => 'nullable|in:public,authenticated,hidden',
+        ]);
+
+        $filename = $validated['filename'];
+
+        // Block path traversal
+        if (str_contains($filename, '/') || str_contains($filename, '\\') || str_contains($filename, '..')) {
+            return redirect()->back()
+                ->with('error', 'Invalid filename: path traversal not allowed.');
+        }
+
+        // Construct source path
+        $sourcePath = storage_path("app/public/items/{$item->id}/incoming/{$filename}");
+
+        // Verify file exists and is readable
+        if (!file_exists($sourcePath) || !is_readable($sourcePath)) {
+            return redirect()->back()
+                ->with('error', 'File not found or not readable.');
+        }
+
+        // Generate unique name and destination path
+        $extension = pathinfo($filename, PATHINFO_EXTENSION);
+        $uniqueName = Str::uuid() . '.' . $extension;
+        $destRelativePath = "public/items/{$item->id}/files/{$uniqueName}";
+        $destFullPath = storage_path("app/{$destRelativePath}");
+
+        // Ensure destination directory exists
+        $destDir = dirname($destFullPath);
+        if (!is_dir($destDir)) {
+            mkdir($destDir, 0755, true);
+        }
+
+        // Move the file
+        if (!rename($sourcePath, $destFullPath)) {
+            return redirect()->back()
+                ->with('error', 'Failed to move file.');
+        }
+
+        // Detect MIME type
+        $mimeType = mime_content_type($destFullPath) ?: 'application/octet-stream';
+        $fileSize = filesize($destFullPath);
+
+        if ($validated['attach_as'] === 'main') {
+            // Validate MIME type matches item type
+            $allowedMimeTypes = $this->getAllowedMimeTypesForItemType($item->item_type);
+            $mimeCategory = explode('/', $mimeType)[0]; // e.g., 'image', 'audio', 'video'
+            
+            if (!in_array($mimeCategory, $allowedMimeTypes) && !in_array($mimeType, $allowedMimeTypes)) {
+                // Move file back to incoming if validation fails
+                rename($destFullPath, $sourcePath);
+                
+                return redirect()->back()
+                    ->with('error', "File type \"{$mimeType}\" is not compatible with item type \"{$item->item_type}\". Expected: " . implode(', ', $allowedMimeTypes) . '.');
+            }
+
+            // Attach as main media
+            $media = $item->media()->create([
+                'filename' => $filename,
+                'path' => $destRelativePath,
+                'mime_type' => $mimeType,
+                'size' => $fileSize,
+                'is_transcript' => false,
+                'sort_order' => $item->media()->max('sort_order') + 1,
+                'processing_status' => 'uploaded', // TODO: Dispatch processing job here if needed
+            ]);
+
+            // TODO: Dispatch processing job
+            // ProcessMediaUpload::dispatch($media);
+
+            return redirect()->back()
+                ->with('success', "File \"{$filename}\" attached as main media.");
+        } else {
+            // Attach as supplemental media with metadata
+            $metadata = [
+                'label' => $validated['label'] ?? $filename,
+                'role' => $validated['role'] ?? 'supplemental',
+                'visibility' => $validated['visibility'] ?? 'public',
+            ];
+
+            $media = $item->media()->create([
+                'filename' => $filename,
+                'path' => $destRelativePath,
+                'mime_type' => $mimeType,
+                'size' => $fileSize,
+                'is_transcript' => false,
+                'sort_order' => $item->media()->max('sort_order') + 1,
+                'metadata' => $metadata,
+                'processing_status' => 'ready', // Supplemental files don't need processing
+            ]);
+
+            return redirect()->back()
+                ->with('success', "File \"{$filename}\" attached as supplemental media.");
+        }
+    }
+
+    /**
+     * Get allowed MIME type categories for a given item type.
+     * Returns array of allowed MIME type prefixes (e.g., 'audio', 'video', 'image').
+     */
+    private function getAllowedMimeTypesForItemType(string $itemType): array
+    {
+        return match($itemType) {
+            'audio' => ['audio'],
+            'video' => ['video'],
+            'image' => ['image'],
+            'document' => ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text'],
+            'other' => ['audio', 'video', 'image', 'application', 'text'], // Allow anything for "other"
+            default => [],
+        };
     }
 
     /**

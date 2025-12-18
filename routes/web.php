@@ -56,6 +56,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::put('items/{item}', [ItemController::class, 'update'])->name('items.update');
     Route::patch('items/{item}', [ItemController::class, 'update']);
     Route::delete('items/{item}', [ItemController::class, 'destroy'])->name('items.destroy');
+    Route::post('items/{item}/attach-incoming', [ItemController::class, 'attachIncoming'])->name('items.attach-incoming');
 
     // HTMX partial for transcript field
     Route::get('items/transcript-field', [ItemController::class, 'transcriptField'])->name('items.transcript-field');
