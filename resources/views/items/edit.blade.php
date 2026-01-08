@@ -123,6 +123,9 @@
 
                 @include('items._workflow')
 
+                {{-- User Tracking --}}
+                @include('partials._user_tracking', ['model' => $item])
+
                 {{-- Danger Zone --}}
                 <div class="card border-danger mt-3">
                     <div class="card-header bg-danger text-white">

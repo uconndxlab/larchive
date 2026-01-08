@@ -18,11 +18,41 @@ class Collection extends Model
         'status',
         'description',
         'published_at',
+        'created_by',
+        'updated_by',
     ];
 
     protected $casts = [
         'published_at' => 'datetime',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($collection) {
+            if (auth()->check()) {
+                $collection->created_by = auth()->id();
+                $collection->updated_by = auth()->id();
+            }
+        });
+
+        static::updating(function ($collection) {
+            if (auth()->check()) {
+                $collection->updated_by = auth()->id();
+            }
+        });
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function updater()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
 
     public function items()
     {

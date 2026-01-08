@@ -231,6 +231,7 @@ class ItemController extends Controller
     {
         $this->authorize('update', $item);
         
+        $item->load(['creator', 'updater']);
         $collections = Collection::orderBy('title')->get();
         return view('items.edit', compact('item', 'collections'));
     }

@@ -138,6 +138,7 @@ class ExhibitController extends Controller
     {
         $this->authorize('update', $exhibit);
         
+        $exhibit->load(['creator', 'updater']);
         return view('exhibits.edit', compact('exhibit'));
     }
 

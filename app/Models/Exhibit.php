@@ -24,6 +24,8 @@ class Exhibit extends Model
         'featured',
         'sort_order',
         'published_at',
+        'created_by',
+        'updated_by',
     ];
 
     protected $casts = [
@@ -37,6 +39,11 @@ class Exhibit extends Model
         
         // Auto-generate slug from title if not provided
         static::creating(function ($exhibit) {
+            if (auth()->check()) {
+                $exhibit->created_by = auth()->id();
+                $exhibit->updated_by = auth()->id();
+            }
+            
             if (empty($exhibit->slug)) {
                 $slug = Str::slug($exhibit->title);
                 $originalSlug = $slug;
@@ -51,10 +58,26 @@ class Exhibit extends Model
                 $exhibit->slug = $slug;
             }
         });
+
+        static::updating(function ($exhibit) {
+            if (auth()->check()) {
+                $exhibit->updated_by = auth()->id();
+            }
+        });
     }
 
     // Relationships
     
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function updater()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
     public function items()
     {
         return $this->belongsToMany(Item::class)

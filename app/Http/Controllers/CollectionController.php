@@ -93,6 +93,7 @@ class CollectionController extends Controller
     {
         $this->authorize('update', $collection);
         
+        $collection->load(['creator', 'updater']);
         return view('collections.edit', compact('collection'));
     }
 

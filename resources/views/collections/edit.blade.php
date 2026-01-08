@@ -28,7 +28,10 @@
     </div>
 
     <div class="col-md-4">
-        <div class="card border-danger">
+        {{-- User Tracking --}}
+        @include('partials._user_tracking', ['model' => $collection])
+
+        <div class="card border-danger mt-3">
             <div class="card-header bg-danger text-white">
                 <h6 class="mb-0">Danger Zone</h6>
             </div>
