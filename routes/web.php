@@ -66,6 +66,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
     // Media routes
     Route::post('items/{item}/media', [MediaController::class, 'store'])->name('items.media.store');
+    Route::post('items/{item}/media/chunk', [MediaController::class, 'uploadChunk'])->name('items.media.chunk');
     Route::get('items/{item}/media', [MediaController::class, 'index'])->name('items.media.index');
     Route::patch('items/{item}/media/reorder', [MediaController::class, 'reorder'])->name('items.media.reorder');
     Route::patch('media/{media}', [MediaController::class, 'update'])->name('media.update');

@@ -23,76 +23,167 @@
         {{-- Media Files Section --}}
         <h6 class="mb-3">Media Files</h6>
         <p class="text-muted small mb-3">
-            Upload media files for this item (images, audio, video, PDFs, documents). You can designate one as the featured/main file after uploading.
+            Upload media files for this item. Drag and drop files or click to browse. Large files are automatically split into chunks for reliable uploads.
         </p>
 
-        {{-- Error display container --}}
-        <div id="upload-errors" class="alert alert-danger d-none mb-3"></div>
+        {{-- Dropzone for Large File Uploads --}}
+        <div id="large-file-dropzone" class="dropzone mb-4"></div>
         
-        {{-- Show validation errors if any --}}
-        @if($errors->any())
-            <div class="alert alert-danger">
-                <ul class="mb-0">
-                    @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-        
-        <div class="row g-3 align-items-end mb-3">
-            <div class="col-md-9">
-                <label for="media-files" class="form-label">Select Files</label>
-                <input type="file" 
-                       class="form-control" 
-                       id="media-files" 
-                       name="files[]"
-                       form="media-upload-form"
-                       multiple 
-                       required>
-                <small class="form-text text-muted">
-                    Max 512MB each. Supported: images, PDFs, audio, video, documents.
-                </small>
-            </div>
-            
-            <div class="col-md-3">
-                <button type="submit" form="media-upload-form" class="btn btn-primary w-100">Upload Files</button>
-            </div>
-        </div>
-
-        {{-- Upload progress indicator --}}
-        <div class="upload-progress htmx-indicator mb-3">
-            <div class="progress">
-                <div class="progress-bar progress-bar-striped progress-bar-animated" 
-                     role="progressbar" 
-                     style="width: 100%">
-                    Uploading...
+        {{-- Legacy upload form (hidden, kept for HTMX compatibility) --}}
+        <div class="d-none">
+            <div class="row g-3 align-items-end mb-3">
+                <div class="col-md-9">
+                    <label for="media-files" class="form-label">Select Files</label>
+                    <input type="file" 
+                           class="form-control" 
+                           id="media-files" 
+                           name="files[]"
+                           form="media-upload-form"
+                           multiple 
+                           required>
+                </div>
+                
+                <div class="col-md-3">
+                    <button type="submit" form="media-upload-form" class="btn btn-primary w-100">Upload Files</button>
                 </div>
             </div>
         </div>
 
-        <script>
-            // Handle HTMX validation errors (422 responses)
-            document.getElementById('media-upload-form')?.addEventListener('htmx:responseError', function(evt) {
-                if (evt.detail.xhr.status === 422) {
-                    const response = JSON.parse(evt.detail.xhr.responseText);
-                    const errorDiv = document.getElementById('upload-errors');
-                    const errorMessages = Object.values(response.errors).flat();
-                    
-                    errorDiv.innerHTML = '<ul class="mb-0">' + 
-                        errorMessages.map(msg => '<li>' + msg + '</li>').join('') + 
-                        '</ul>';
-                    errorDiv.classList.remove('d-none');
-                    
-                    // Scroll to errors
-                    errorDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                }
-            });
+        <link rel="stylesheet" href="https://unpkg.com/dropzone@5/dist/min/dropzone.min.css" type="text/css" />
+        <script src="https://unpkg.com/dropzone@5/dist/min/dropzone.min.js"></script>
 
-            // Clear errors on successful upload
-            document.getElementById('media-upload-form')?.addEventListener('htmx:afterSwap', function() {
-                const errorDiv = document.getElementById('upload-errors');
-                errorDiv?.classList.add('d-none');
+        <style>
+        .dropzone {
+            border: 2px dashed #0087F7;
+            border-radius: 8px;
+            background: #f8f9fa;
+            min-height: 200px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .dropzone:hover {
+            border-color: #0056b3;
+            background: #e9ecef;
+        }
+
+        .dropzone .dz-message {
+            font-size: 1.1rem;
+            color: #666;
+            margin: 2rem 0;
+        }
+
+        .dropzone .dz-message .note {
+            font-size: 0.875rem;
+            color: #999;
+            display: block;
+            margin-top: 0.5rem;
+        }
+
+        .dropzone.dz-drag-hover {
+            border-color: #28a745;
+            background: #d4edda;
+        }
+
+        .dropzone .dz-preview {
+            margin: 10px;
+        }
+
+        .dropzone .dz-preview .dz-progress {
+            height: 8px;
+        }
+        </style>
+
+        <script>
+            Dropzone.autoDiscover = false;
+
+            document.addEventListener('DOMContentLoaded', function() {
+                const itemId = {{ $item->id }};
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+                
+                const myDropzone = new Dropzone("#large-file-dropzone", {
+                    url: `/items/${itemId}/media/chunk`,
+                    paramName: "file",
+                    chunking: true,
+                    forceChunking: true,
+                    chunkSize: 2000000, // 2MB chunks
+                    parallelChunkUploads: false,
+                    retryChunks: true,
+                    retryChunksLimit: 3,
+                    maxFilesize: 50000, // 50GB max
+                    timeout: 300000, // 5 minutes per chunk
+                    parallelUploads: 1,
+                    uploadMultiple: false,
+                    
+                    dictDefaultMessage: "Drop files here or click to upload<br><span class='note'>Supports files up to 50GB • Automatic chunked upload for large files</span>",
+                    
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    
+                    params: function(files, xhr, chunk) {
+                        if (chunk) {
+                            return {
+                                dzuuid: chunk.file.upload.uuid,
+                                dzchunkindex: chunk.index,
+                                dztotalfilesize: chunk.file.size,
+                                dztotalchunkcount: chunk.file.upload.totalChunkCount,
+                                dzchunksize: this.options.chunkSize,
+                                original_filename: chunk.file.name
+                            };
+                        }
+                    },
+                    
+                    init: function() {
+                        this.on("success", function(file, response) {
+                            console.log("Upload complete:", file.name);
+                            
+                            // Show success message
+                            file.previewElement.querySelector('.dz-success-mark').style.opacity = '1';
+                            
+                            // Reload media list after a brief delay
+                            setTimeout(() => {
+                                const mediaList = document.getElementById('media-list');
+                                if (mediaList) {
+                                    // Trigger HTMX to reload the media list
+                                    htmx.ajax('GET', `/items/${itemId}/media`, {
+                                        target: '#media-list',
+                                        swap: 'outerHTML'
+                                    });
+                                }
+                            }, 1000);
+                        });
+                        
+                        this.on("error", function(file, errorMessage, xhr) {
+                            console.error("Upload failed:", errorMessage);
+                            
+                            // Show error in preview
+                            if (typeof errorMessage === 'object') {
+                                file.previewElement.querySelector('.dz-error-message span').textContent = 
+                                    errorMessage.error || 'Upload failed';
+                            } else {
+                                file.previewElement.querySelector('.dz-error-message span').textContent = errorMessage;
+                            }
+                        });
+                        
+                        this.on("uploadprogress", function(file, progress, bytesSent) {
+                            console.log("Progress:", file.name, Math.round(progress) + "%");
+                        });
+                        
+                        this.on("sending", function(file, xhr, formData) {
+                            console.log("Starting upload:", file.name);
+                        });
+                        
+                        this.on("complete", function(file) {
+                            // Remove file from dropzone after 3 seconds on success
+                            if (file.status === Dropzone.SUCCESS) {
+                                setTimeout(() => {
+                                    this.removeFile(file);
+                                }, 3000);
+                            }
+                        });
+                    }
+                });
             });
         </script>
 

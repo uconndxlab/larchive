@@ -202,6 +202,101 @@ class MediaController extends Controller
     }
 
     /**
+     * Handle chunked file upload for large files.
+     */
+    public function uploadChunk(Request $request, Item $item)
+    {
+        $this->authorize('update', $item);
+        
+        $chunkIndex = $request->input('dzchunkindex');
+        $totalChunks = $request->input('dztotalchunkcount');
+        $uuid = $request->input('dzuuid');
+        $filename = $request->input('original_filename');
+        
+        // Create temp directory for chunks
+        $tempDir = storage_path("app/temp/chunks/{$uuid}");
+        if (!is_dir($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+        
+        // Save chunk
+        $chunk = $request->file('file');
+        if (!$chunk) {
+            return response()->json(['error' => 'No file chunk received'], 400);
+        }
+        
+        $chunk->move($tempDir, $chunkIndex);
+        
+        // Check if all chunks received
+        $chunks = glob($tempDir . '/*');
+        
+        if (count($chunks) == $totalChunks) {
+            // Combine all chunks
+            $finalPath = storage_path("app/temp/{$uuid}_{$filename}");
+            $output = fopen($finalPath, 'wb');
+            
+            for ($i = 0; $i < $totalChunks; $i++) {
+                $chunkPath = $tempDir . '/' . $i;
+                if (file_exists($chunkPath)) {
+                    $content = file_get_contents($chunkPath);
+                    fwrite($output, $content);
+                    unlink($chunkPath);
+                }
+            }
+            fclose($output);
+            
+            // Get file info before moving
+            $mimeType = mime_content_type($finalPath);
+            $fileSize = filesize($finalPath);
+            
+            // Determine disk
+            $disk = config('media.disk', 'public');
+            
+            // Move to permanent storage using stream (memory efficient)
+            $storagePath = "items/{$item->id}/" . \Illuminate\Support\Str::uuid() . '_' . basename($filename);
+            $stream = fopen($finalPath, 'r');
+            Storage::disk($disk)->put($storagePath, $stream);
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
+            
+            // Create media record
+            $media = $item->media()->create([
+                'filename' => $filename,
+                'path' => $storagePath,
+                'mime_type' => $mimeType,
+                'size' => $fileSize,
+                'sort_order' => $item->media()->max('sort_order') + 1,
+                'processing_status' => 'uploaded',
+            ]);
+            
+            // Dispatch processing job
+            if (config('media.processing.enabled', true)) {
+                ProcessMediaUpload::dispatch($media);
+                
+                Log::info("Dispatched media processing job (chunked upload)", [
+                    'media_id' => $media->id,
+                    'filename' => $filename,
+                    'size' => $fileSize,
+                ]);
+            } else {
+                $media->markAsReady();
+            }
+            
+            // Cleanup
+            unlink($finalPath);
+            rmdir($tempDir);
+            
+            return response()->json([
+                'success' => true,
+                'media_id' => $media->id,
+            ]);
+        }
+        
+        return response()->json(['success' => true, 'chunk' => $chunkIndex]);
+    }
+
+    /**
      * Get allowed MIME type categories for a given item type.
      * Returns array of allowed MIME type prefixes (e.g., 'audio', 'video', 'image').
      */
