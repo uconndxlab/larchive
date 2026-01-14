@@ -31,6 +31,9 @@ class LoginController extends Controller
 
         if (Auth::attempt($credentials, $remember)) {
             $request->session()->regenerate();
+            
+            // Update last login timestamp
+            Auth::user()->update(['last_login_at' => now()]);
 
             return redirect()->intended('/')->with('success', 'Welcome back, ' . Auth::user()->name . '!');
         }

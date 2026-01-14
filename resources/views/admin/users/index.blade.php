@@ -29,7 +29,8 @@
                         <th>Name</th>
                         <th>Email</th>
                         <th>Role</th>
-                        <th>Created</th>
+                        <th>Last Login</th>
+                        <th>Activity</th>
                         <th class="text-end">Actions</th>
                     </tr>
                 </thead>
@@ -52,7 +53,21 @@
                                     <span class="badge bg-secondary">Contributor</span>
                                 @endif
                             </td>
-                            <td>{{ $user->created_at->format('M d, Y') }}</td>
+                            <td>
+                                @if($user->last_login_at)
+                                    <span title="{{ $user->last_login_at->format('M d, Y g:i A') }}">
+                                        {{ $user->last_login_at->diffForHumans() }}
+                                    </span>
+                                @else
+                                    <span class="text-muted">Never</span>
+                                @endif
+                            </td>
+                            <td>
+                                <small class="text-muted">
+                                    {{ $user->items_count }} items, 
+                                    {{ $user->media_count }} files
+                                </small>
+                            </td>
                             <td class="text-end">
                                 <div class="btn-group btn-group-sm">
                                     <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-outline-secondary" title="Edit">
@@ -72,7 +87,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="text-center text-muted py-4">
+                            <td colspan="6" class="text-center text-muted py-4">
                                 No users found.
                             </td>
                         </tr>

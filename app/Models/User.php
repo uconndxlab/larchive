@@ -22,6 +22,7 @@ class User extends Authenticatable
         'email',
         'role',
         'password',
+        'last_login_at',
     ];
 
     /**
@@ -43,6 +44,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'last_login_at' => 'datetime',
             'password' => 'hashed',
         ];
     }
@@ -71,5 +73,39 @@ class User extends Authenticatable
     public function isContributor(): bool
     {
         return in_array($this->role, ['admin', 'curator', 'contributor']);
+    }
+
+    // --- Relationships ---
+
+    /**
+     * Get the items created by this user.
+     */
+    public function items()
+    {
+        return $this->hasMany(\App\Models\Item::class, 'created_by');
+    }
+
+    /**
+     * Get the media uploaded by this user.
+     */
+    public function media()
+    {
+        return $this->hasMany(\App\Models\Media::class, 'uploaded_by');
+    }
+
+    /**
+     * Get the collections created by this user.
+     */
+    public function collections()
+    {
+        return $this->hasMany(\App\Models\Collection::class, 'created_by');
+    }
+
+    /**
+     * Get the exhibits created by this user.
+     */
+    public function exhibits()
+    {
+        return $this->hasMany(\App\Models\Exhibit::class, 'created_by');
     }
 }

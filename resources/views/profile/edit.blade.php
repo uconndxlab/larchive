@@ -5,8 +5,8 @@
     <div class="col-md-8">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Edit User: {{ $user->name }}</h5>
-                <a href="{{ route('admin.users.index') }}" class="btn btn-sm btn-outline-secondary">Back</a>
+                <h5 class="mb-0">Edit Profile</h5>
+                <a href="{{ route('profile.show') }}" class="btn btn-sm btn-outline-secondary">Back</a>
             </div>
             <div class="card-body">
                 @if(session('success'))
@@ -16,35 +16,11 @@
                     </div>
                 @endif
 
-                {{-- User Activity Summary --}}
-                <div class="card bg-light mb-4">
-                    <div class="card-body">
-                        <h6 class="card-title">User Activity</h6>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <p class="mb-1"><strong>Member Since:</strong> {{ $user->created_at->format('M d, Y') }}</p>
-                                <p class="mb-1"><strong>Last Login:</strong> 
-                                    @if($user->last_login_at)
-                                        {{ $user->last_login_at->format('M d, Y g:i A') }}
-                                        <span class="text-muted">({{ $user->last_login_at->diffForHumans() }})</span>
-                                    @else
-                                        <span class="text-muted">Never</span>
-                                    @endif
-                                </p>
-                            </div>
-                            <div class="col-md-6">
-                                <p class="mb-1"><strong>Items Created:</strong> {{ $user->items_count }}</p>
-                                <p class="mb-1"><strong>Files Uploaded:</strong> {{ $user->media_count }}</p>
-                                <p class="mb-1"><strong>Collections:</strong> {{ $user->collections_count }}</p>
-                                <p class="mb-1"><strong>Exhibits:</strong> {{ $user->exhibits_count }}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <form action="{{ route('admin.users.update', $user) }}" method="POST">
+                <form action="{{ route('profile.update') }}" method="POST">
                     @csrf
                     @method('PUT')
+                    
+                    <h6 class="mb-3">Basic Information</h6>
                     
                     <div class="mb-3">
                         <label for="name" class="form-label">Name <span class="text-danger">*</span></label>
@@ -77,23 +53,37 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="role" class="form-label">Role <span class="text-danger">*</span></label>
-                        <select 
-                            class="form-select @error('role') is-invalid @enderror" 
-                            id="role" 
-                            name="role" 
-                            required
-                        >
-                            <option value="contributor" {{ old('role', $user->role) === 'contributor' ? 'selected' : '' }}>Contributor</option>
-                            <option value="curator" {{ old('role', $user->role) === 'curator' ? 'selected' : '' }}>Curator</option>
-                            <option value="admin" {{ old('role', $user->role) === 'admin' ? 'selected' : '' }}>Admin</option>
-                        </select>
-                        @error('role')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
+                        <label class="form-label text-muted">Role</label>
+                        <p class="mb-0">
+                            @if($user->role === 'admin')
+                                <span class="badge bg-danger">Admin</span>
+                            @elseif($user->role === 'curator')
+                                <span class="badge bg-primary">Curator</span>
+                            @else
+                                <span class="badge bg-secondary">Contributor</span>
+                            @endif
+                            <small class="text-muted ms-2">Contact an administrator to change your role</small>
+                        </p>
                     </div>
 
                     <hr class="my-4">
+
+                    <h6 class="mb-3">Change Password</h6>
+                    <p class="text-muted small">Leave blank to keep your current password</p>
+
+                    <div class="mb-3">
+                        <label for="current_password" class="form-label">Current Password</label>
+                        <input 
+                            type="password" 
+                            class="form-control @error('current_password') is-invalid @enderror" 
+                            id="current_password" 
+                            name="current_password"
+                        >
+                        <div class="form-text">Required if changing password</div>
+                        @error('current_password')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
 
                     <div class="mb-3">
                         <label for="password" class="form-label">New Password</label>
@@ -103,7 +93,7 @@
                             id="password" 
                             name="password"
                         >
-                        <div class="form-text">Leave blank to keep current password. Minimum 8 characters if changing.</div>
+                        <div class="form-text">Minimum 8 characters</div>
                         @error('password')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
@@ -122,9 +112,9 @@
                         @enderror
                     </div>
 
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary">Update User</button>
-                        <a href="{{ route('admin.users.index') }}" class="btn btn-secondary">Cancel</a>
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">Update Profile</button>
+                        <a href="{{ route('profile.show') }}" class="btn btn-secondary">Cancel</a>
                     </div>
                 </form>
             </div>

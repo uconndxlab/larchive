@@ -79,6 +79,11 @@
                         </ul>
                         <ul class="navbar-nav">
                             <li class="nav-item">
+                                <a class="nav-link" href="{{ route('profile.show') }}">
+                                    <i class="bi bi-person-badge"></i> My Profile
+                                </a>
+                            </li>
+                            <li class="nav-item">
                                 <form method="POST" action="{{ route('logout') }}" class="d-inline">
                                     @csrf
                                     <button type="submit" class="btn btn-link nav-link">
@@ -130,6 +135,12 @@
                                         <span class="dropdown-item-text">
                                             <small class="text-muted">{{ Auth::user()->email }}</small>
                                         </span>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a href="{{ route('profile.show') }}" class="dropdown-item">
+                                            <i class="bi bi-person-badge"></i> My Profile
+                                        </a>
                                     </li>
                                     <li><hr class="dropdown-divider"></li>
                                     <li>

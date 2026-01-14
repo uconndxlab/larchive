@@ -20,7 +20,8 @@ class UserPolicy
      */
     public function view(User $user, User $model): bool
     {
-        return $user->isAdmin();
+        // Admins can view anyone, users can view themselves
+        return $user->isAdmin() || $user->id === $model->id;
     }
 
     /**
@@ -36,7 +37,8 @@ class UserPolicy
      */
     public function update(User $user, User $model): bool
     {
-        return $user->isAdmin();
+        // Admins can update anyone, users can update themselves
+        return $user->isAdmin() || $user->id === $model->id;
     }
 
     /**

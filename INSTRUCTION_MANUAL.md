@@ -4,16 +4,17 @@
 
 1. [Overview](#overview)
 2. [Getting Started](#getting-started)
-3. [Creating Collections](#creating-collections)
-4. [Creating Items](#creating-items)
-5. [Uploading Media](#uploading-media)
+3. [User Roles & Permissions](#user-roles--permissions)
+4. [Creating Collections](#creating-collections)
+5. [Creating Items](#creating-items)
+6. [Uploading Media](#uploading-media)
    - [Via Web UI](#via-web-ui)
    - [Via FTP/SFTP](#via-ftpsftp)
-6. [Creating Exhibits](#creating-exhibits)
-7. [Managing Exhibit Pages](#managing-exhibit-pages)
-8. [Attaching Items to Exhibits](#attaching-items-to-exhibits)
-9. [Publishing & Visibility](#publishing--visibility)
-10. [Troubleshooting](#troubleshooting)
+7. [Creating Exhibits](#creating-exhibits)
+8. [Managing Exhibit Pages](#managing-exhibit-pages)
+9. [Attaching Items to Exhibits](#attaching-items-to-exhibits)
+10. [Publishing & Visibility](#publishing--visibility)
+11. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -34,8 +35,8 @@
 
 ### Prerequisites
 
-- Access to the Larchive admin dashboard (requires admin role)
 - Login credentials provided by your system administrator
+- Appropriate user role for the tasks you need to perform (see [User Roles & Permissions](#user-roles--permissions))
 - For FTP uploads: SFTP client (e.g., FileZilla, Cyberduck)
 
 ### Logging In
@@ -44,13 +45,177 @@
 2. Enter your email and password
 3. Click **Login**
 
-### Admin Dashboard
+### Navigation
 
-After logging in, you'll have access to:
-- **Collections** - Browse and manage collections
-- **Items** - Browse and manage archival items
-- **Exhibits** - Browse and manage exhibits
-- **Admin Menu** - User management, settings, taxonomies
+After logging in, you'll have access to features based on your role:
+- **Collections** - Browse and manage collections (Curators and Admins)
+- **Items** - Browse and manage archival items (all authenticated users)
+- **Exhibits** - Browse and manage exhibits (Curators and Admins)
+- **Admin Menu** - User management, settings, taxonomies (Admins only)
+- **My Profile** - View and edit your own profile (all authenticated users)
+
+See [User Roles & Permissions](#user-roles--permissions) for detailed information about what each role can do.
+
+---
+
+## User Roles & Permissions
+
+Larchive has three user roles with different permission levels. The system uses a hierarchical structure where each higher level includes all permissions from the levels below.
+
+### Role Hierarchy
+
+**Contributor** → **Curator** → **Admin**
+
+---
+
+### Contributor (Entry-Level User)
+
+Contributors can create and edit items but cannot publish them directly. This role is ideal for content creators who submit work for review.
+
+#### What Contributors Can Do:
+
+**Items:**
+- ✅ Create new items
+- ✅ Edit items in **Draft** and **In Review** status
+- ✅ View items in **Draft** and **In Review** status
+- ✅ Delete their own draft items
+- ✅ Submit items for review (change status from Draft to In Review)
+- ✅ Upload and manage media files for items they can edit
+- ❌ **Cannot** publish items directly
+- ❌ **Cannot** archive items
+- ❌ **Cannot** edit published items
+
+**Collections:** ❌ No access - cannot create, edit, or delete collections
+
+**Exhibits:** ❌ No access - cannot create, edit, or delete exhibits
+
+**Profile:**
+- ✅ View and edit their own profile
+- ✅ Change their own password
+- ✅ View their activity statistics
+
+**Access:**
+- Items Workspace to see their drafts and items in review
+
+#### Typical Workflow:
+1. Create items and add metadata
+2. Upload media files
+3. Submit items for review (In Review status)
+4. Wait for Curator or Admin to publish
+
+---
+
+### Curator (Content Manager)
+
+Curators have full content management capabilities and can publish content. This role is ideal for project managers and editors.
+
+#### What Curators Can Do:
+
+**All Contributor permissions, plus:**
+
+**Items:**
+- ✅ Publish items (change status to **Published**)
+- ✅ Archive items (change status to **Archived**)
+- ✅ Edit published items
+- ✅ View and edit **all items** regardless of status
+- ✅ Delete any item (not just their own drafts)
+- ✅ Restore deleted items
+
+**Collections:**
+- ✅ Create new collections
+- ✅ Edit all collections
+- ✅ Publish/archive collections
+- ✅ Delete collections
+- ✅ Restore deleted collections
+- ✅ Manage collection visibility settings
+
+**Exhibits:**
+- ✅ Create new exhibits
+- ✅ Edit all exhibits
+- ✅ Create and manage exhibit pages
+- ✅ Publish/archive exhibits
+- ✅ Delete exhibits
+- ✅ Restore deleted exhibits
+- ✅ Manage exhibit visibility settings
+- ✅ Attach/detach items to exhibits
+
+**Access:**
+- Full access to Items Workspace
+- Can approve content submitted by Contributors
+
+#### Typical Workflow:
+1. Review items submitted by Contributors
+2. Publish approved content
+3. Create and manage collections and exhibits
+4. Organize content for public presentation
+
+---
+
+### Admin (System Administrator)
+
+Admins have all curator permissions plus full system administration capabilities.
+
+#### What Admins Can Do:
+
+**All Curator permissions, plus:**
+
+**User Management:**
+- ✅ View all users and their activity statistics
+- ✅ Create new user accounts
+- ✅ Edit user profiles (name, email, role)
+- ✅ Change user passwords
+- ✅ Delete users (except themselves - safety feature)
+- ✅ View user activity metrics (items created, files uploaded, last login)
+
+**System Settings:**
+- ✅ Manage taxonomies (create, edit, delete custom metadata fields)
+- ✅ Manage terms within taxonomies
+- ✅ Configure site notices
+- ✅ Configure theme settings
+- ✅ Access all administrative interfaces
+
+**Enhanced Permissions:**
+- ✅ Force delete (permanent deletion) of items, collections, and exhibits
+- ✅ Full system access via admin navigation bar
+
+#### Typical Workflow:
+1. Manage user accounts and permissions
+2. Configure system settings
+3. Oversee all content and user activity
+4. Perform administrative maintenance tasks
+
+---
+
+### Permission Comparison Table
+
+| Feature | Contributor | Curator | Admin |
+|---------|-------------|---------|-------|
+| Create/Edit Draft Items | ✓ | ✓ | ✓ |
+| Publish Items | ✗ | ✓ | ✓ |
+| Manage Collections | ✗ | ✓ | ✓ |
+| Manage Exhibits | ✗ | ✓ | ✓ |
+| User Management | ✗ | ✗ | ✓ |
+| System Settings | ✗ | ✗ | ✓ |
+| Taxonomies | ✗ | ✗ | ✓ |
+| Own Profile | ✓ | ✓ | ✓ |
+
+---
+
+### Checking Your Role
+
+To see what role you have:
+1. Log in to Larchive
+2. Your role is displayed in the top navigation bar next to your name
+3. Or visit **My Profile** to see your role
+
+### Requesting Role Changes
+
+If you need different permissions:
+1. Contact your system administrator
+2. Explain what tasks you need to perform
+3. Administrators can change your role as needed
+
+**Note:** Only Admins can change user roles.
 
 ---
 
@@ -688,10 +853,11 @@ Controls **whether content is ready** to be viewed:
 **Symptom**: "Unauthorized" or "403 Forbidden" error
 
 **Solutions**:
-- Verify you have admin role
+- Verify you have the required role for the action you're trying to perform
+- Check the [User Roles & Permissions](#user-roles--permissions) section
 - Log out and log back in
-- Contact admin to check permissions
-- Some actions require elevated privileges
+- Contact your administrator to check permissions
+- Some actions require Curator or Admin privileges
 
 ---
 
@@ -798,7 +964,7 @@ Controls **whether content is ready** to be viewed:
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: January 8, 2026  
+**Document Version**: 1.1  
+**Last Updated**: January 13, 2026  
 **Larchive Version**: 1.0  
 **Generated By**: Claude Sonnet 4.5

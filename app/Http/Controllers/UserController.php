@@ -20,7 +20,9 @@ class UserController extends Controller
     {
         $this->authorize('viewAny', User::class);
 
-        $users = User::orderBy('created_at', 'desc')->paginate(20);
+        $users = User::withCount(['items', 'media', 'collections', 'exhibits'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
 
         return view('admin.users.index', compact('users'));
     }
@@ -67,6 +69,9 @@ class UserController extends Controller
     public function edit(User $user)
     {
         $this->authorize('update', $user);
+        
+        // Load activity counts for display
+        $user->loadCount(['items', 'media', 'collections', 'exhibits']);
 
         return view('admin.users.edit', compact('user'));
     }
