@@ -25,7 +25,7 @@ class ItemController extends Controller
         $this->authorize('viewAny', Item::class);
 
         $status = request('status', 'draft');
-        $query = Item::with('collection');
+        $query = Item::with(['collection', 'media']);
 
         // Filter by status
         if (in_array($status, ['draft', 'in_review', 'published', 'archived'])) {

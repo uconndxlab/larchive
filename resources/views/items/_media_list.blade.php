@@ -229,16 +229,32 @@
         }
 
         // Toggle supplemental fields visibility
-        document.querySelectorAll('.media-type-select').forEach(select => {
-            select.addEventListener('change', function() {
-                const form = this.closest('.media-edit-form');
-                const supplementalFields = form.querySelectorAll('.supplemental-fields');
+        function toggleSupplementalFields(select) {
+            const form = select.closest('.media-edit-form');
+            const supplementalFields = form.querySelectorAll('.supplemental-fields');
+            
+            if (select.value === 'supplemental') {
+                supplementalFields.forEach(field => field.classList.remove('d-none'));
                 
-                if (this.value === 'supplemental') {
-                    supplementalFields.forEach(field => field.classList.remove('d-none'));
-                } else {
-                    supplementalFields.forEach(field => field.classList.add('d-none'));
+                // Set default role if switching to supplemental and role is empty
+                const roleInput = form.querySelector('input[name="role"]');
+                if (roleInput && !roleInput.value) {
+                    roleInput.value = 'supplemental';
+                    // Trigger the auto-save
+                    roleInput.dispatchEvent(new Event('change', { bubbles: true }));
                 }
+            } else {
+                supplementalFields.forEach(field => field.classList.add('d-none'));
+            }
+        }
+        
+        document.querySelectorAll('.media-type-select').forEach(select => {
+            // Set initial state on page load
+            toggleSupplementalFields(select);
+            
+            // Handle changes
+            select.addEventListener('change', function() {
+                toggleSupplementalFields(this);
             });
         });
 

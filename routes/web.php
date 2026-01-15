@@ -15,6 +15,20 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\Admin\ThemeController;
 use Illuminate\Support\Facades\Route;
 
+// API routes for AJAX requests
+Route::get('/api/tags', function() {
+    $tagsTaxonomy = \App\Models\Taxonomy::where('key', 'tags')->first();
+    if (!$tagsTaxonomy) {
+        return response()->json([]);
+    }
+    
+    $tags = \App\Models\Term::where('taxonomy_id', $tagsTaxonomy->id)
+        ->orderBy('name')
+        ->get(['id', 'name']);
+    
+    return response()->json($tags);
+})->name('api.tags');
+
 // Authentication routes
 Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('login', [LoginController::class, 'login']);

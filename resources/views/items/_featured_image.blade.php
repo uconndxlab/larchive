@@ -1,5 +1,5 @@
 {{-- Featured Image --}}
-<div class="card mb-3">
+<div class="card my-3">
     <div class="card-header">
         <h6 class="mb-0">Featured Image</h6>
     </div>

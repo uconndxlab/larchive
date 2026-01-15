@@ -114,6 +114,7 @@
     </div>
 </div>
 
+@if (!empty($item))
 {{-- Additional Metadata --}}
 <div class="card mb-4">
     <div class="card-header">
@@ -187,6 +188,7 @@
         </div>
     </div>
 </div>
+@endif
 
 
 

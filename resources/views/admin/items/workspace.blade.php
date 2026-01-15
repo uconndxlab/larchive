@@ -101,11 +101,11 @@
                 <div class="card h-100">
                     {{-- Thumbnail or Type Icon --}}
                     <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 150px;">
-                        @if($item->media->where('is_featured', true)->first() || $item->media->first())
+                        @if($item->featuredImage)
                             @php
-                                $featuredMedia = $item->media->where('is_featured', true)->first() ?? $item->media->first();
+                                $featuredMedia = $item->featuredImage;
                             @endphp
-                            @if(str_starts_with($featuredMedia->mime_type, 'image/'))
+                            @if($featuredMedia && str_starts_with($featuredMedia->mime_type, 'image/'))
                                 <img src="{{ Storage::url($featuredMedia->path) }}" 
                                      alt="{{ $item->title }}" 
                                      class="img-fluid" 

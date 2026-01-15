@@ -131,9 +131,13 @@ class MediaController extends Controller
         
         if ($request->input('media_type') === 'supplemental') {
             // Store supplemental metadata
-            $metadata['label'] = $request->input('label', $media->filename);
-            $metadata['role'] = $request->input('role', 'supplemental');
-            $metadata['visibility'] = $request->input('visibility', 'public');
+            $label = $request->input('label');
+            $role = $request->input('role');
+            $visibility = $request->input('visibility');
+            
+            $metadata['label'] = !empty($label) ? $label : $media->filename;
+            $metadata['role'] = !empty($role) ? $role : 'supplemental';
+            $metadata['visibility'] = !empty($visibility) ? $visibility : 'public';
         } else {
             // Switching to main - validate MIME type matches item type
             $item = $media->item;
