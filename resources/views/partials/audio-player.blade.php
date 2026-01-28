@@ -22,7 +22,7 @@
                     </div>
                 </div>
 
-                <audio id="audio-{{ $audio->id }}" src="{{ Storage::url($audio->path) }}" preload="metadata"></audio>
+                <audio id="audio-{{ $audio->id }}" src="{{ route('media.stream', $audio) }}" preload="metadata"></audio>
 
                 <div class="audio-controls">
                     <div class="d-flex align-items-center gap-3 mb-2">

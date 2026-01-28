@@ -14,6 +14,7 @@ class Media extends Model
         'size',
         'alt_text',
         'is_transcript',
+        'format',
         'sort_order',
         'processing_status',
         'processing_error',

@@ -5,6 +5,7 @@ use App\Http\Controllers\CollectionController;
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\ItemOhmsController;
 use App\Http\Controllers\MediaController;
+use App\Http\Controllers\MediaStreamController;
 use App\Http\Controllers\ExhibitController;
 use App\Http\Controllers\ExhibitPageController;
 use App\Http\Controllers\ExportController;
@@ -57,6 +58,9 @@ Route::get('/', function () {
 
 // Public route for acknowledging the site notice
 Route::post('notice/acknowledge', [SiteNoticeController::class, 'acknowledge'])->name('notice.acknowledge');
+
+// Media streaming route with range request support (for seekable audio/video)
+Route::get('media/{media}/stream', [MediaStreamController::class, 'stream'])->name('media.stream');
 
 // Admin routes - require authentication and admin role
 // These MUST come before public {item}/{collection}/{exhibit} routes to avoid conflicts

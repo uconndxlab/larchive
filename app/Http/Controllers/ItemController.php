@@ -145,7 +145,7 @@ class ItemController extends Controller
             // Featured image upload
             'featured_image' => 'nullable|image|max:10240',
             // Transcript upload (optional, for audio/video types)
-            'transcript' => 'nullable|file|mimes:txt,vtt,srt,pdf,doc,docx|max:10240',
+            'transcript' => 'nullable|file|mimes:xml,txt,vtt,srt,pdf,doc,docx|max:10240',
             // Dublin Core metadata
             'dc_creator' => 'nullable|string|max:500',
             'dc_date' => 'nullable|date_format:Y-m-d',
@@ -189,6 +189,7 @@ class ItemController extends Controller
         if ($request->hasFile('transcript') && in_array($item->item_type, ['audio', 'video'])) {
             $file = $request->file('transcript');
             $path = $file->store("items/{$item->id}", 'public');
+            $format = $this->detectTranscriptFormat($file, $request->input('transcript_format'));
             
             $transcriptMedia = $item->media()->create([
                 'filename' => $file->getClientOriginalName(),
@@ -196,6 +197,7 @@ class ItemController extends Controller
                 'mime_type' => $file->getMimeType(),
                 'size' => $file->getSize(),
                 'is_transcript' => true,
+                'format' => $format,
                 'sort_order' => 999, // Put transcripts at end
             ]);
 
@@ -257,7 +259,9 @@ class ItemController extends Controller
             'existing_featured_image_id' => 'nullable|exists:media,id',
             'remove_featured_image' => 'nullable|boolean',
             // Transcript upload (optional, for audio/video types)
-            'transcript' => 'nullable|file|mimes:txt,vtt,srt,pdf,doc,docx|max:10240',
+            'transcript' => 'nullable|file|mimes:xml,txt,vtt,srt,pdf,doc,docx|max:10240',
+            'transcript_format' => 'nullable|in:ohms,vtt,srt,txt',
+            'remove_transcript' => 'nullable|boolean',
             // Dublin Core metadata
             'dc_creator' => 'nullable|string|max:500',
             'dc_date' => 'nullable|date_format:Y-m-d',
@@ -314,6 +318,18 @@ class ItemController extends Controller
             $item->update(['featured_image_id' => $request->input('existing_featured_image_id')]);
         }
 
+        // Handle transcript removal
+        if ($request->input('remove_transcript')) {
+            if ($item->transcript_id) {
+                $oldTranscript = $item->transcript;
+                if ($oldTranscript) {
+                    Storage::disk('public')->delete($oldTranscript->path);
+                    $oldTranscript->delete();
+                }
+                $item->update(['transcript_id' => null]);
+            }
+        }
+
         // Handle new transcript upload
         if ($request->hasFile('transcript') && in_array($item->item_type, ['audio', 'video'])) {
             // Delete old transcript if exists
@@ -327,6 +343,7 @@ class ItemController extends Controller
 
             $file = $request->file('transcript');
             $path = $file->store("items/{$item->id}", 'public');
+            $format = $this->detectTranscriptFormat($file, $request->input('transcript_format'));
             
             $transcriptMedia = $item->media()->create([
                 'filename' => $file->getClientOriginalName(),
@@ -334,6 +351,7 @@ class ItemController extends Controller
                 'mime_type' => $file->getMimeType(),
                 'size' => $file->getSize(),
                 'is_transcript' => true,
+                'format' => $format,
                 'sort_order' => 999,
             ]);
 
@@ -505,6 +523,32 @@ class ItemController extends Controller
             'document' => ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text'],
             'other' => ['audio', 'video', 'image', 'application', 'text'], // Allow anything for "other"
             default => [],
+        };
+    }
+
+    /**
+     * Detect transcript format based on file extension and MIME type.
+     */
+    private function detectTranscriptFormat(\Illuminate\Http\UploadedFile $file, ?string $forcedFormat = null): string
+    {
+        if ($forcedFormat) {
+            return $forcedFormat;
+        }
+
+        $extension = strtolower($file->getClientOriginalExtension());
+        $mimeType = $file->getMimeType();
+
+        return match ($extension) {
+            'xml' => 'ohms',
+            'vtt' => 'vtt',
+            'srt' => 'srt',
+            'txt' => 'txt',
+            default => match ($mimeType) {
+                'application/xml', 'text/xml' => 'ohms',
+                'text/vtt' => 'vtt',
+                'text/plain' => 'txt',
+                default => 'txt', // fallback
+            },
         };
     }
 
