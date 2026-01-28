@@ -16,6 +16,10 @@ class MediaStreamController extends Controller
     {
         // Check if file exists
         $path = $media->path;
+        
+        // Strip 'public/' prefix if present (paths stored as 'public/items/...')
+        $path = preg_replace('#^public/#', '', $path);
+        
         $disk = Storage::disk('public');
         
         if (!$disk->exists($path)) {
