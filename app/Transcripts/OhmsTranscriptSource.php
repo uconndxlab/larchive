@@ -4,6 +4,7 @@ namespace App\Transcripts;
 
 use App\Models\Item;
 use App\Models\Media;
+use App\Services\WebVttGenerator;
 use Illuminate\Support\Facades\Storage;
 use SimpleXMLElement;
 
@@ -13,6 +14,7 @@ use SimpleXMLElement;
 class OhmsTranscriptSource implements TranscriptSource
 {
     protected array $segments = [];
+    protected ?string $vttPath = null;
 
     public function __construct(protected Item|Media $source)
     {
@@ -27,6 +29,64 @@ class OhmsTranscriptSource implements TranscriptSource
     public function segments(): array
     {
         return $this->segments;
+    }
+
+    public function getVttPath(): ?string
+    {
+        // Check if we already generated it
+        if ($this->vttPath !== null) {
+            return $this->vttPath;
+        }
+
+        // Get the Media object for VTT generation
+        $media = $this->source instanceof Media ? $this->source : $this->source->media()->transcripts()->first();
+        
+        if (!$media) {
+            return null;
+        }
+
+        // Check if VTT file already exists
+        if (WebVttGenerator::vttExists($media)) {
+            $this->vttPath = WebVttGenerator::getVttPath($media);
+            return $this->vttPath;
+        }
+
+        // Generate VTT file from parsed segments
+        if (!empty($this->segments)) {
+            // Calculate end times for OHMS segments (which don't have them)
+            $segmentsWithEnds = $this->addEndTimes($this->segments);
+            $this->vttPath = WebVttGenerator::generateFromSegments($segmentsWithEnds, $media);
+        }
+
+        return $this->vttPath;
+    }
+
+    /**
+     * Add estimated end times to OHMS segments which only have start times.
+     */
+    protected function addEndTimes(array $segments): array
+    {
+        $result = [];
+        $count = count($segments);
+        
+        for ($i = 0; $i < $count; $i++) {
+            $segment = $segments[$i];
+            
+            // If there's a next segment, use its start time as this segment's end time
+            if ($i < $count - 1) {
+                $segment['end'] = $segments[$i + 1]['start'];
+            } else {
+                // For the last segment, estimate duration based on text length
+                // Rough estimate: 150 words per minute = 2.5 words per second
+                $wordCount = str_word_count($segment['text'] ?? '');
+                $estimatedDuration = max(5, $wordCount / 2.5); // Minimum 5 seconds
+                $segment['end'] = $segment['start'] + $estimatedDuration;
+            }
+            
+            $result[] = $segment;
+        }
+        
+        return $result;
     }
 
     protected function loadSegments(): void

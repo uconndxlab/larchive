@@ -35,7 +35,13 @@ class TranscriptSourceFactory
         // Assume it's a transcript if passed to this factory
 
         // Detect format if not set (for legacy transcripts)
-        $format = $source->format ?: $this->detectFormat($source);
+        $format = $source->format ?: self::detectFormat($source);
+        
+        // Skip unsupported binary formats (PDF, DOC, DOCX)
+        // These are accepted as transcript uploads but can't be parsed or converted to VTT
+        if (in_array($format, ['pdf', 'doc', 'docx'])) {
+            return null;
+        }
 
         return match ($format) {
             'ohms' => new OhmsTranscriptSource($source),
@@ -56,10 +62,16 @@ class TranscriptSourceFactory
             'vtt' => 'vtt',
             'srt' => 'srt',
             'txt' => 'txt',
+            'pdf' => 'pdf',
+            'doc' => 'doc',
+            'docx' => 'docx',
             default => match ($mimeType) {
                 'application/xml', 'text/xml' => 'ohms',
                 'text/vtt' => 'vtt',
                 'text/plain' => 'txt',
+                'application/pdf' => 'pdf',
+                'application/msword' => 'doc',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'docx',
                 default => 'txt',
             },
         };

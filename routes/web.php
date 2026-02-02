@@ -62,6 +62,9 @@ Route::post('notice/acknowledge', [SiteNoticeController::class, 'acknowledge'])-
 // Media streaming route with range request support (for seekable audio/video)
 Route::get('media/{media}/stream', [MediaStreamController::class, 'stream'])->name('media.stream');
 
+// VTT file serving route with proper UTF-8 headers
+Route::get('vtt/{path}', [MediaStreamController::class, 'serveVtt'])->where('path', '.*')->name('vtt.serve');
+
 // Admin routes - require authentication and admin role
 // These MUST come before public {item}/{collection}/{exhibit} routes to avoid conflicts
 Route::middleware(['auth', 'admin'])->group(function () {

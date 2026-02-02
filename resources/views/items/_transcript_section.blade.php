@@ -3,16 +3,46 @@
         <h6 class="mb-3">Transcript</h6>
         
         @if(isset($item->id) && $item->transcript)
+            @php
+                $transcriptSource = \App\Transcripts\TranscriptSourceFactory::create($item);
+                $vttPath = $transcriptSource?->getVttPath();
+                $hasVttGenerated = $vttPath && $item->transcript->format !== 'vtt';
+                $isBinaryFormat = in_array($item->transcript->format, ['pdf', 'doc', 'docx']);
+            @endphp
+            
             <div class="alert alert-success mb-3">
-                Current transcript: <strong>{{ $item->transcript->filename }}</strong>
-                @if($item->transcript->format)
-                    <span class="badge bg-secondary">{{ strtoupper($item->transcript->format) }}</span>
-                @endif
-                ({{ number_format($item->transcript->size / 1024, 1) }} KB)
-                <button type="button" class="btn btn-sm btn-outline-danger ms-2" 
-                        onclick="if(confirm('Remove this transcript?')) { document.getElementById('remove-transcript').value = '1'; document.getElementById('item-edit-form').submit(); }">
-                    Remove
-                </button>
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        Current transcript: <strong>{{ $item->transcript->filename }}</strong>
+                        @if($item->transcript->format)
+                            <span class="badge bg-secondary">{{ strtoupper($item->transcript->format) }}</span>
+                        @endif
+                        ({{ number_format($item->transcript->size / 1024, 1) }} KB)
+                        
+                        @if($isBinaryFormat)
+                            <div class="mt-2 small text-muted">
+                                <i class="bi bi-info-circle"></i>
+                                Note: {{ strtoupper($item->transcript->format) }} files cannot be automatically converted to WebVTT format for video player captions.
+                            </div>
+                        @elseif($hasVttGenerated)
+                            <div class="mt-2 small">
+                                <i class="bi bi-file-earmark-text"></i>
+                                <strong>WebVTT version available:</strong>
+                                <a href="{{ route('vtt.serve', ['path' => $vttPath]) }}" 
+                                   class="btn btn-sm btn-outline-primary ms-2" 
+                                   download="{{ pathinfo($item->transcript->filename, PATHINFO_FILENAME) }}.vtt">
+                                    <i class="bi bi-download"></i> Download WebVTT
+                                </a>
+                                <span class="text-muted ms-2">(Auto-generated for video player compatibility)</span>
+                            </div>
+                        @endif
+                    </div>
+                    
+                    <button type="button" class="btn btn-sm btn-outline-danger" 
+                            onclick="if(confirm('Remove this transcript?')) { document.getElementById('remove-transcript').value = '1'; document.getElementById('item-edit-form').submit(); }">
+                        Remove
+                    </button>
+                </div>
             </div>
         @endif
 

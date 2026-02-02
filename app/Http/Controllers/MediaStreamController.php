@@ -77,4 +77,26 @@ class MediaStreamController extends Controller
             'Cache-Control' => 'public, max-age=31536000',
         ]);
     }
+
+    /**
+     * Serve a VTT file with proper UTF-8 headers.
+     */
+    public function serveVtt(string $path)
+    {
+        // Sanitize the path
+        $path = ltrim($path, '/');
+        
+        $disk = Storage::disk('public');
+        
+        if (!$disk->exists($path)) {
+            abort(404, 'VTT file not found');
+        }
+
+        $content = $disk->get($path);
+        
+        return response($content)
+            ->header('Content-Type', 'text/vtt; charset=UTF-8')
+            ->header('Content-Disposition', 'inline; filename="' . basename($path) . '"')
+            ->header('Cache-Control', 'public, max-age=31536000');
+    }
 }

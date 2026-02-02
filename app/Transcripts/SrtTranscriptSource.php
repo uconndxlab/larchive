@@ -3,6 +3,7 @@
 namespace App\Transcripts;
 
 use App\Models\Media;
+use App\Services\WebVttGenerator;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -11,6 +12,7 @@ use Illuminate\Support\Facades\Storage;
 class SrtTranscriptSource implements TranscriptSource
 {
     protected array $segments = [];
+    protected ?string $vttPath = null;
 
     public function __construct(protected Media $media)
     {
@@ -25,6 +27,27 @@ class SrtTranscriptSource implements TranscriptSource
     public function segments(): array
     {
         return $this->segments;
+    }
+
+    public function getVttPath(): ?string
+    {
+        // Check if we already generated it
+        if ($this->vttPath !== null) {
+            return $this->vttPath;
+        }
+
+        // Check if VTT file already exists
+        if (WebVttGenerator::vttExists($this->media)) {
+            $this->vttPath = WebVttGenerator::getVttPath($this->media);
+            return $this->vttPath;
+        }
+
+        // Generate VTT file from parsed segments
+        if (!empty($this->segments)) {
+            $this->vttPath = WebVttGenerator::generateFromSegments($this->segments, $this->media);
+        }
+
+        return $this->vttPath;
     }
 
     protected function loadSegments(): void

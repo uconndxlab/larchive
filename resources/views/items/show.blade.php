@@ -105,11 +105,19 @@
                 @case('video')
                     @php
                         $videoFiles = $item->media->filter(fn($m) => str_starts_with($m->mime_type, 'video/') && !isset($m->metadata['role']));
+                        $vttPath = $transcriptSource?->getVttPath();
                     @endphp
                     @if($videoFiles->isNotEmpty())
                         @foreach($videoFiles as $video)
                             <video controls class="w-100 mb-3">
                                 <source src="{{ route('media.stream', $video) }}" type="{{ $video->mime_type }}">
+                                @if($vttPath)
+                                    <track kind="subtitles" 
+                                           src="{{ route('vtt.serve', ['path' => $vttPath]) }}" 
+                                           srclang="en" 
+                                           label="English"
+                                           default>
+                                @endif
                             </video>
                         @endforeach
                     @else
@@ -301,6 +309,37 @@
         @if($transcriptSource)
             <div class="tab-pane fade" id="transcript">
                 <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">
+                            <i class="bi bi-file-text"></i> Transcript
+                        </h6>
+                        <div>
+                            @if($item->transcript)
+                                {{-- Original transcript download --}}
+                                <a href="{{ Storage::url($item->transcript->path) }}" 
+                                   class="btn btn-sm btn-outline-primary" 
+                                   download="{{ $item->transcript->filename }}">
+                                    <i class="bi bi-download"></i> Download Original
+                                    @if($item->transcript->format)
+                                        ({{ strtoupper($item->transcript->format) }})
+                                    @endif
+                                </a>
+                                
+                                {{-- WebVTT download if available --}}
+                                @php
+                                    $vttPath = $transcriptSource->getVttPath();
+                                    $hasVttGenerated = $vttPath && $item->transcript->format !== 'vtt';
+                                @endphp
+                                @if($hasVttGenerated)
+                                    <a href="{{ route('vtt.serve', ['path' => $vttPath]) }}" 
+                                       class="btn btn-sm btn-outline-success ms-2" 
+                                       download="{{ pathinfo($item->transcript->filename, PATHINFO_FILENAME) }}.vtt">
+                                        <i class="bi bi-download"></i> Download WebVTT
+                                    </a>
+                                @endif
+                            @endif
+                        </div>
+                    </div>
                     <div class="card-body">
                         @if(!empty($transcriptSegments))
                             @if(count($transcriptSegments) === 1 && $transcriptSegments[0]['start'] === null)

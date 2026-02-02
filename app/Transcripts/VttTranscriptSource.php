@@ -27,6 +27,12 @@ class VttTranscriptSource implements TranscriptSource
         return $this->segments;
     }
 
+    public function getVttPath(): ?string
+    {
+        // VTT files are already in VTT format, return the original path
+        return $this->media->path;
+    }
+
     protected function loadSegments(): void
     {
         $content = Storage::disk('public')->get($this->media->path);
