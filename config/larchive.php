@@ -23,10 +23,6 @@ return [
             'name' => 'Default',
             'description' => 'Base Larchive theme with standard Bootstrap 5 styling.',
         ],
-        'sing-sing' => [
-            'name' => 'Sing Sing Prison Museum',
-            'description' => 'Custom theme for the Sing Sing Prison Museum implementation.',
-        ],
     ],
 
     /*
