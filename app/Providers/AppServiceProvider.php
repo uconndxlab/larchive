@@ -35,19 +35,21 @@ class AppServiceProvider extends ServiceProvider
 
     /**
      * Register theme-specific view paths.
-     * 
-     * This adds the active theme's view directory to the view finder,
-     * so Laravel will check themes/{active_theme}/ before falling back to base views.
+     *
+     * This registers any view folders provided by the active theme (resources override
+     * or external theme packages in public/themes/*). Each discovered path is prepended
+     * so theme-provided views take precedence.
      */
     protected function registerThemeViews(): void
     {
         try {
             $activeTheme = Theme::active();
-            $themePath = resource_path("views/themes/{$activeTheme}");
+            $paths = Theme::getViewPaths($activeTheme);
 
-            if (is_dir($themePath)) {
-                // Prepend theme path so it's checked first
-                View::getFinder()->prependLocation($themePath);
+            foreach ($paths as $path) {
+                if (is_dir($path)) {
+                    View::getFinder()->prependLocation($path);
+                }
             }
         } catch (\Exception $e) {
             // Silently fail during migration or if site_settings table doesn't exist

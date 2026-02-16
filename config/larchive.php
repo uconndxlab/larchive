@@ -32,6 +32,9 @@ return [
     |
     | The fallback theme when no active theme is set.
     |
+    | Note: themes may also be autodiscovered from `public/themes/{folder}` when a
+    | `theme.json` manifest is present (manifest can define `key`, `name`, `views`, etc.).
+    |
     */
 
     'default_theme' => 'default',

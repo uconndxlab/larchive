@@ -46,8 +46,9 @@ Route::get('/', function () {
     // Check for theme-specific homepage
     try {
         $theme = \App\Support\Theme::active();
-        if (view()->exists("themes.{$theme}.home")) {
-            return view("themes.{$theme}.home");
+        // Check either a namespaced themes.{key}.home or a plain 'home' in theme view roots
+        if (\View::exists("themes.{$theme}.home") || \View::exists('home')) {
+            return \App\Support\Theme::view('home');
         }
     } catch (\Exception $e) {
         // Fallback if theme system not available

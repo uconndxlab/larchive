@@ -13,8 +13,9 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     
     <!-- Theme CSS -->
-    @if(file_exists(public_path('themes/' . $activeTheme . '/theme.css')))
-        <link rel="stylesheet" href="{{ asset('themes/' . $activeTheme . '/theme.css') }}">
+    @php $cssPath = \App\Support\Theme::cssPath($activeTheme); @endphp
+    @if($cssPath && file_exists(public_path($cssPath)))
+        <link rel="stylesheet" href="{{ asset($cssPath) }}">
     @endif
 </head>
 <body>

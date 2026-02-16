@@ -64,14 +64,27 @@
                                     
                                     {{-- Show file paths for developers --}}
                                     <div class="mt-2">
+                                        @php
+                                            $viewPaths = \App\Support\Theme::getViewPaths($key);
+                                            $cssPath = \App\Support\Theme::cssPath($key);
+                                        @endphp
+
                                         <small class="text-muted d-block">
                                             <i class="bi bi-folder"></i> 
-                                            Views: <code>resources/views/themes/{{ $key }}/</code>
+                                            Views: 
+                                            @if(count($viewPaths))
+                                                @foreach($viewPaths as $p)
+                                                    <code>{{ str_replace(base_path() . '/', '', $p) }}/</code>@if(!$loop->last), @endif
+                                                @endforeach
+                                            @else
+                                                <code>resources/views/themes/{{ $key }}/</code>
+                                            @endif
                                         </small>
+
                                         <small class="text-muted d-block">
                                             <i class="bi bi-file-earmark-code"></i> 
-                                            CSS: <code>public/themes/{{ $key }}/theme.css</code>
-                                            @if(file_exists(public_path("themes/{$key}/theme.css")))
+                                            CSS: <code>{{ $cssPath ?? 'public/themes/'.$key.'/theme.css' }}</code>
+                                            @if($cssPath && file_exists(public_path($cssPath)))
                                                 <span class="badge bg-success">✓</span>
                                             @else
                                                 <span class="badge bg-warning">Not found</span>
@@ -89,10 +102,10 @@
                         </h6>
                         <p class="mb-2 small">To create a custom theme:</p>
                         <ol class="mb-0 small">
-                            <li>Add theme configuration to <code>config/larchive.php</code></li>
-                            <li>Create theme views in <code>resources/views/themes/{'{theme-key}'}/</code></li>
-                            <li>Add theme CSS to <code>public/themes/{'{theme-key}'}/theme.css</code></li>
-                            <li>Optionally add assets like logos to <code>public/themes/{'{theme-key}'}/</code></li>
+                            <li>Optionally add theme configuration to <code>config/larchive.php</code> or include a <code>theme.json</code> manifest in your theme directory (auto-discovered)</li>
+                            <li>Create theme views in <code>resources/views/themes/{'{theme-key}'}/</code> or inside your theme repo (e.g. <code>front-ends/</code>)</li>
+                            <li>Add theme CSS to <code>public/themes/{'{theme-folder}'}/theme.css</code> (manifest can map folder → key)</li>
+                            <li>Optionally add assets like logos to <code>public/themes/{'{theme-folder}'}/</code></li>
                         </ol>
                     </div>
 
