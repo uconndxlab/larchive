@@ -10,8 +10,8 @@ class Theme
 {
     /**
      * Cached themes (merge of config + discovery).
-     *
-     * @var array|null
+        *
+        * @var array|null
      */
     protected static ?array $cached = null;
 
@@ -98,19 +98,38 @@ class Theme
     }
 
     /**
-     * Get the path to a theme asset (uses discovered folder when present).
+     * Get the URL to an existing asset in the active theme package.
      */
-    public static function asset(string $path, ?string $themeKey = null): string
+    public static function asset(string $path, ?string $themeKey = null): ?string
     {
         $themeKey = $themeKey ?? static::active();
         $info = static::get($themeKey);
+        $folder = ! empty($info['folder']) ? $info['folder'] : $themeKey;
+        $basePath = $info['base_path'] ?? public_path("themes/{$folder}");
+        $basePath = realpath($basePath);
 
-        $folder = $themeKey;
-        if (!empty($info['folder'])) {
-            $folder = $info['folder'];
+        $path = str_replace('\\', '/', $path);
+        if ($basePath === false || $path === '' || str_starts_with($path, '/') || preg_match('/^[A-Za-z]:\//', $path)) {
+            return null;
         }
 
-        return asset("themes/{$folder}/{$path}");
+        $segments = explode('/', $path);
+        if (in_array('..', $segments, true) || in_array('', $segments, true)) {
+            return null;
+        }
+
+        foreach ([$path, "front-ends/{$path}"] as $relativePath) {
+            $candidate = $basePath.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $relativePath);
+            $resolved = realpath($candidate);
+
+            if ($resolved !== false
+                && is_file($resolved)
+                && str_starts_with($resolved, $basePath.DIRECTORY_SEPARATOR)) {
+                return asset("themes/{$folder}/{$relativePath}");
+            }
+        }
+
+        return null;
     }
 
     /**
