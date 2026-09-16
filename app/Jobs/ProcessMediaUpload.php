@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\Media;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use getID3;
@@ -125,6 +126,7 @@ class ProcessMediaUpload implements ShouldQueue
     protected function extractAudioVideoMetadata($disk, $path): array
     {
         $metadata = [];
+        $tempPath = null;
 
         try {
             // Download file temporarily for analysis
@@ -178,14 +180,15 @@ class ProcessMediaUpload implements ShouldQueue
                 }
             }
 
-            // Clean up temp file
-            @unlink($tempPath);
-
         } catch (\Exception $e) {
             Log::warning("Failed to extract audio/video metadata", [
                 'media_id' => $this->media->id,
                 'error' => $e->getMessage(),
             ]);
+        } finally {
+            if (is_string($tempPath)) {
+                File::delete($tempPath);
+            }
         }
 
         return $metadata;
@@ -197,6 +200,7 @@ class ProcessMediaUpload implements ShouldQueue
     protected function extractImageMetadata($disk, $path): array
     {
         $metadata = [];
+        $tempPath = null;
 
         try {
             // Download file temporarily
@@ -211,14 +215,15 @@ class ProcessMediaUpload implements ShouldQueue
                 $metadata['format'] = image_type_to_extension($imageSize[2], false);
             }
 
-            // Clean up
-            @unlink($tempPath);
-
         } catch (\Exception $e) {
             Log::warning("Failed to extract image metadata", [
                 'media_id' => $this->media->id,
                 'error' => $e->getMessage(),
             ]);
+        } finally {
+            if (is_string($tempPath)) {
+                File::delete($tempPath);
+            }
         }
 
         return $metadata;

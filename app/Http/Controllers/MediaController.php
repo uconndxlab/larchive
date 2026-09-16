@@ -7,6 +7,7 @@ use App\Jobs\ProcessMediaUpload;
 use App\Models\Item;
 use App\Models\Media;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 
@@ -211,24 +212,26 @@ class MediaController extends Controller
     public function uploadChunk(Request $request, Item $item)
     {
         $this->authorize('update', $item);
-        
-        $chunkIndex = $request->input('dzchunkindex');
-        $totalChunks = $request->input('dztotalchunkcount');
-        $uuid = $request->input('dzuuid');
-        $filename = $request->input('original_filename');
+
+        $validated = $request->validate([
+            'dzchunkindex' => ['required', 'integer', 'min:0', 'lt:dztotalchunkcount'],
+            'dztotalchunkcount' => ['required', 'integer', 'min:1'],
+            'dzuuid' => ['required', 'uuid'],
+            'original_filename' => ['required', 'string', 'max:255', 'not_regex:/[\\\\\/]/'],
+            'file' => ['required', 'file'],
+        ]);
+
+        $chunkIndex = $validated['dzchunkindex'];
+        $totalChunks = $validated['dztotalchunkcount'];
+        $uuid = $validated['dzuuid'];
+        $filename = $validated['original_filename'];
         
         // Create temp directory for chunks
         $tempDir = storage_path("app/temp/chunks/{$uuid}");
-        if (!is_dir($tempDir)) {
-            mkdir($tempDir, 0755, true);
-        }
-        
+        File::ensureDirectoryExists($tempDir, 0755);
+
         // Save chunk
         $chunk = $request->file('file');
-        if (!$chunk) {
-            return response()->json(['error' => 'No file chunk received'], 400);
-        }
-        
         $chunk->move($tempDir, $chunkIndex);
         
         // Check if all chunks received
@@ -244,7 +247,7 @@ class MediaController extends Controller
                 if (file_exists($chunkPath)) {
                     $content = file_get_contents($chunkPath);
                     fwrite($output, $content);
-                    unlink($chunkPath);
+                    File::delete($chunkPath);
                 }
             }
             fclose($output);
@@ -288,8 +291,8 @@ class MediaController extends Controller
             }
             
             // Cleanup
-            unlink($finalPath);
-            rmdir($tempDir);
+            File::delete($finalPath);
+            File::deleteDirectory($tempDir);
             
             return response()->json([
                 'success' => true,

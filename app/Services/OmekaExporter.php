@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Collection;
 use App\Models\Exhibit;
 use App\Models\Item;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use ZipArchive;
 
@@ -459,25 +460,6 @@ README;
      */
     protected function cleanup(): void
     {
-        $this->deleteDirectory($this->tempPath);
-    }
-
-    /**
-     * Recursively delete directory
-     */
-    protected function deleteDirectory(string $dir): void
-    {
-        if (!file_exists($dir)) {
-            return;
-        }
-
-        $files = array_diff(scandir($dir), ['.', '..']);
-        
-        foreach ($files as $file) {
-            $path = $dir . '/' . $file;
-            is_dir($path) ? $this->deleteDirectory($path) : unlink($path);
-        }
-        
-        rmdir($dir);
+        File::deleteDirectory($this->tempPath);
     }
 }
