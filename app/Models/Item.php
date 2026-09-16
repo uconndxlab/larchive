@@ -85,6 +85,11 @@ class Item extends Model
         return $this->hasMany(Media::class)->where('is_transcript', false)->orderBy('sort_order');
     }
 
+    public function transcripts()
+    {
+        return $this->hasMany(Media::class)->where('is_transcript', true)->orderBy('sort_order');
+    }
+
     public function metadata()
     {
         return $this->hasMany(Metadata::class);

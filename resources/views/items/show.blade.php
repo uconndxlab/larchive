@@ -9,6 +9,8 @@
             <div class="mb-3">
                 @php
                     $featuredMedia = $item->featuredImage;
+                    $transcriptSource = \App\Transcripts\TranscriptSourceFactory::create($item);
+                    $transcriptSegments = $transcriptSource ? $transcriptSource->segments() : [];
                 @endphp
                 @if($featuredMedia && str_starts_with($featuredMedia->mime_type, 'image/'))
                     <img src="{{ Storage::url($featuredMedia->path) }}" class="img-fluid" alt="{{ $item->title }}">
@@ -103,11 +105,19 @@
                 @case('video')
                     @php
                         $videoFiles = $item->media->filter(fn($m) => str_starts_with($m->mime_type, 'video/') && !isset($m->metadata['role']));
+                        $vttPath = $transcriptSource?->getVttPath();
                     @endphp
                     @if($videoFiles->isNotEmpty())
                         @foreach($videoFiles as $video)
                             <video controls class="w-100 mb-3">
-                                <source src="{{ Storage::url($video->path) }}" type="{{ $video->mime_type }}">
+                                <source src="{{ route('media.stream', $video) }}" type="{{ $video->mime_type }}">
+                                @if($vttPath)
+                                    <track kind="subtitles" 
+                                           src="{{ route('vtt.serve', ['path' => $vttPath]) }}" 
+                                           srclang="en" 
+                                           label="English"
+                                           default>
+                                @endif
                             </video>
                         @endforeach
                     @else
@@ -157,7 +167,7 @@
                 <i class="bi bi-info-circle"></i> Item Details
             </a>
         </li>
-        @if(!empty($item->ohms_json))
+        @if($transcriptSource)
             <li class="nav-item">
                 <a class="nav-link" href="#transcript" data-bs-toggle="tab">
                     <i class="bi bi-file-text"></i> Transcript
@@ -178,26 +188,28 @@
         {{-- Item Details Tab --}}
         <div class="tab-pane fade show active" id="item-details">
             <div class="row">
-                {{-- Left Column: OHMS Index/Segments or empty --}}
+                {{-- Left Column: Transcript Segments or empty --}}
                 <div class="col-md-4">
-                    @if(!empty($item->ohms_json) && !empty($item->ohms_json['segments']))
+                    @if($transcriptSource && !empty($transcriptSegments))
                         <h5 class="mb-3">Index</h5>
-                        <div class="list-group">
-                            @foreach($item->ohms_json['segments'] as $segment)
-                                <div class="list-group-item">
+                        <div class="list-group" id="transcript-segments">
+                            @foreach($transcriptSegments as $index => $segment)
+                                <div class="list-group-item segment-item" data-start="{{ $segment['start'] ?? 0 }}" onclick="seekToTime({{ $segment['start'] ?? 0 }})">
                                     <div class="d-flex justify-content-between align-items-start mb-2">
-                                        <h6 class="mb-1">{{ $segment['title'] ?? 'Untitled' }}</h6>
-                                        <span class="badge bg-light text-dark">
-                                            [{{ gmdate('H:i:s', $segment['start_time'] ?? 0) }}]
-                                        </span>
+                                        <h6 class="mb-1">{{ $segment['text'] ? Str::limit($segment['text'], 50) : 'Segment ' . ($index + 1) }}</h6>
+                                        @if($segment['start'] !== null)
+                                            <span class="badge bg-light text-dark">
+                                                [{{ gmdate('H:i:s', $segment['start']) }}]
+                                            </span>
+                                        @endif
                                     </div>
                                     @if(!empty($segment['synopsis']))
                                         <p class="mb-2 small text-muted">{{ $segment['synopsis'] }}</p>
                                     @endif
                                     @if(!empty($segment['keywords']))
                                         <div>
-                                            @foreach(explode(';', $segment['keywords']) as $keyword)
-                                                <span class="badge bg-primary">{{ trim($keyword) }}</span>
+                                            @foreach($segment['keywords'] as $keyword)
+                                                <span class="badge bg-primary">{{ $keyword }}</span>
                                             @endforeach
                                         </div>
                                     @endif
@@ -258,12 +270,12 @@
                                     <small class="text-muted">{{ $item->updated_at->format('g:i A') }}</small>
                                 </dd>
 
-                                @if(!empty($item->ohms_json))
-                                    <dt class="col-sm-4 small text-muted">OHMS Data</dt>
+                                @if($transcriptSource)
+                                    <dt class="col-sm-4 small text-muted">Transcript</dt>
                                     <dd class="col-sm-8">
                                         <span class="badge bg-primary">
-                                            <i class="bi bi-mic-fill"></i>
-                                            {{ count($item->ohms_json['segments'] ?? []) }} segments
+                                            <i class="bi bi-file-text"></i>
+                                            {{ strtoupper($transcriptSource->format()) }} • {{ count($transcriptSegments) }} segments
                                         </span>
                                     </dd>
                                 @endif
@@ -294,12 +306,58 @@
         </div>
 
         {{-- Transcript Tab --}}
-        @if(!empty($item->ohms_json))
+        @if($transcriptSource)
             <div class="tab-pane fade" id="transcript">
                 <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">
+                            <i class="bi bi-file-text"></i> Transcript
+                        </h6>
+                        <div>
+                            @if($item->transcript)
+                                {{-- Original transcript download --}}
+                                <a href="{{ Storage::url($item->transcript->path) }}" 
+                                   class="btn btn-sm btn-outline-primary" 
+                                   download="{{ $item->transcript->filename }}">
+                                    <i class="bi bi-download"></i> Download Original
+                                    @if($item->transcript->format)
+                                        ({{ strtoupper($item->transcript->format) }})
+                                    @endif
+                                </a>
+                                
+                                {{-- WebVTT download if available --}}
+                                @php
+                                    $vttPath = $transcriptSource->getVttPath();
+                                    $hasVttGenerated = $vttPath && $item->transcript->format !== 'vtt';
+                                @endphp
+                                @if($hasVttGenerated)
+                                    <a href="{{ route('vtt.serve', ['path' => $vttPath]) }}" 
+                                       class="btn btn-sm btn-outline-success ms-2" 
+                                       download="{{ pathinfo($item->transcript->filename, PATHINFO_FILENAME) }}.vtt">
+                                        <i class="bi bi-download"></i> Download WebVTT
+                                    </a>
+                                @endif
+                            @endif
+                        </div>
+                    </div>
                     <div class="card-body">
-                        @if(!empty($item->ohms_json['transcript']))
-                            <div style="white-space: pre-wrap; font-family: monospace;">{{ $item->ohms_json['transcript'] }}</div>
+                        @if(!empty($transcriptSegments))
+                            @if(count($transcriptSegments) === 1 && $transcriptSegments[0]['start'] === null)
+                                {{-- Plain text transcript --}}
+                                <div style="white-space: pre-wrap;">{{ $transcriptSegments[0]['text'] }}</div>
+                            @else
+                                {{-- Timed transcript --}}
+                                @foreach($transcriptSegments as $segment)
+                                    @if($segment['start'] !== null)
+                                        <strong>{{ gmdate('H:i:s', $segment['start']) }}:</strong>
+                                    @endif
+                                    {{ $segment['text'] }}
+                                    @if(!empty($segment['synopsis']))
+                                        <em class="text-muted">({{ $segment['synopsis'] }})</em>
+                                    @endif
+                                    <br>
+                                @endforeach
+                            @endif
                         @else
                             <p class="text-muted">No transcript available.</p>
                         @endif
@@ -345,4 +403,22 @@
         @endif
     </div>
 </div>
+
+<script>
+function seekToTime(seconds) {
+    // Find the media element (audio or video)
+    const media = document.querySelector('audio, video');
+    
+    if (media) {
+        // Pause and seek
+        media.pause();
+        media.currentTime = seconds;
+        
+        // Play after seeking
+        media.play().catch(error => {
+            console.error('Play error:', error);
+        });
+    }
+}
+</script>
 @endsection
