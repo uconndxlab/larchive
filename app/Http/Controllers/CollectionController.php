@@ -17,7 +17,14 @@ class CollectionController extends Controller
      */
     public function index()
     {
-        $query = Collection::published()->visibleTo(Auth::user());
+        $user = Auth::user();
+        $query = Collection::visibleTo($user);
+
+        // Keep unpublished collections out of public browsing, while allowing
+        // administrators to manage and review every collection state.
+        if (!$user || !$user->isAdmin()) {
+            $query->published();
+        }
 
         if (request('search')) {
             $query->where('title', 'like', '%' . request('search') . '%');
@@ -79,9 +86,16 @@ class CollectionController extends Controller
     {
         $this->authorize('view', $collection);
         
-        // Load only published items for public view
-        $collection->load(['items' => function ($query) {
-            $query->published()->visibleTo(Auth::user());
+        $user = Auth::user();
+
+        // Public visitors only receive published items. Administrators have
+        // already passed the collection policy above and can review drafts.
+        $collection->load(['items' => function ($query) use ($user) {
+            $query->visibleTo($user);
+
+            if (!$user || !$user->isAdmin()) {
+                $query->published();
+            }
         }]);
         return view('collections.show', compact('collection'));
     }
