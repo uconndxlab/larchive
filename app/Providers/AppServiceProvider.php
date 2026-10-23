@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\View;
 use App\Support\Theme;
 
@@ -43,6 +44,14 @@ class AppServiceProvider extends ServiceProvider
     protected function registerThemeViews(): void
     {
         try {
+            if (
+                Auth::check()
+                || request()->is('admin*')
+                || request()->is('profile*')
+            ) {
+                return;
+            }
+
             $activeTheme = Theme::active();
             $paths = Theme::getViewPaths($activeTheme);
 

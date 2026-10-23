@@ -12,9 +12,13 @@ return [
     | - A description
     |
     | Theme files should be placed in:
-    | - Views: resources/views/themes/{theme-key}/
-    | - CSS: public/themes/{theme-key}/theme.css
-    | - Assets: public/themes/{theme-key}/
+    | - App-owned views: resources/views/themes/{theme-key}/
+    | - External package views/assets: public/themes/{theme-folder}/
+    | - CSS: public/themes/{theme-folder}/theme.css
+    |
+    | To install a theme, clone or copy the theme package into public/themes/<folder>
+    | and select it in the admin Theme Settings page. To remove a theme, reset the
+    | active theme back to the default theme or remove the external folder from disk.
     |
     */
 

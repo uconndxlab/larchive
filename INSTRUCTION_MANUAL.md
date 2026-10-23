@@ -172,7 +172,22 @@ Admins have all curator permissions plus full system administration capabilities
 - ✅ Manage terms within taxonomies
 - ✅ Configure site notices
 - ✅ Configure theme settings
+- ✅ Reset the site back to the default theme when an external theme is no longer needed
 - ✅ Access all administrative interfaces
+
+#### Theme Installation and Removal
+
+Themes are treated as external packages, not app-owned source files.
+
+1. Clone or copy a theme package into the app's theme directory:
+   - `public/themes/<theme-folder>/`
+2. Make sure the theme includes a `theme.json` manifest when needed, or at least a folder structure compatible with the app's view and asset discovery.
+3. Open the admin Theme Settings page and choose the installed theme from the dropdown.
+4. To remove a theme from the site, either:
+   - reset the active theme to the default theme using the "Reset to Default" button, or
+   - delete the external theme folder from `public/themes/` if you no longer want it installed.
+
+The app keeps the active theme in the database via `active_theme`, while the default fallback is defined in `config/larchive.php`.
 
 **Enhanced Permissions:**
 - ✅ Force delete (permanent deletion) of items, collections, and exhibits

@@ -70,6 +70,11 @@
 
                     <ul class="navbar-nav ms-auto">
                         <li class="nav-item">
+                            <a class="nav-link" href="{{ route('home') }}" target="_blank" rel="noopener noreferrer">
+                                <i class="bi bi-globe"></i> View Site
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" href="{{ route('profile.show') }}">
                                 <i class="bi bi-person-badge"></i> My Profile
                             </a>

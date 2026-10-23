@@ -163,34 +163,100 @@ class ApiAccessTest extends TestCase
         $mediaResponse->assertStatus(403);
     }
 
+    public function test_admin_can_create_and_revoke_api_tokens_for_a_user(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $targetUser = User::factory()->create(['role' => 'contributor']);
+
+        $this->assertCount(0, $targetUser->tokens()->get());
+
+        $createResponse = $this->actingAs($admin)
+            ->post('/admin/users/' . $targetUser->id . '/tokens', [
+                'name' => 'External importer',
+            ]);
+
+        $createResponse->assertRedirect('/admin/users/' . $targetUser->id . '/edit');
+
+        $this->assertCount(1, $targetUser->fresh()->tokens()->get());
+        $this->assertNotNull(session('api_token'));
+
+        $tokenId = $targetUser->fresh()->tokens()->first()->id;
+
+        $revokeResponse = $this->actingAs($admin)
+            ->delete('/admin/users/' . $targetUser->id . '/tokens/' . $tokenId);
+
+        $revokeResponse->assertRedirect('/admin/users/' . $targetUser->id . '/edit');
+        $this->assertCount(0, $targetUser->fresh()->tokens()->get());
+    }
+
     public function test_admin_menu_survives_theme_layout_overrides(): void
     {
         $admin = User::factory()->create([
             'role' => 'admin',
         ]);
 
-        SiteSetting::set('active_theme', 'sspm');
+        $themeKey = 'custom-theme';
+        $themeDir = resource_path("views/themes/{$themeKey}");
+        $themePartialDir = $themeDir . '/partials';
+        $themeLayoutDir = $themeDir . '/layouts';
 
-        $themeLayoutDir = resource_path('views/themes/sspm/layouts');
+        if (!is_dir($themePartialDir)) {
+            mkdir($themePartialDir, 0777, true);
+        }
         if (!is_dir($themeLayoutDir)) {
             mkdir($themeLayoutDir, 0777, true);
         }
+
+        file_put_contents($themePartialDir . '/admin-nav.blade.php', '<nav>THEME-ONLY NAV</nav>');
         file_put_contents($themeLayoutDir . '/app.blade.php', '<html><body>THEME-ONLY LAYOUT</body></html>');
 
-        View::getFinder()->prependLocation(resource_path('views/themes/sspm'));
+        SiteSetting::set('active_theme', $themeKey);
+
+        $reflection = new \ReflectionProperty(\App\Support\Theme::class, 'cached');
+        $reflection->setValue(null, null);
 
         $response = $this->actingAs($admin)->get('/admin/items/workspace');
 
         $response->assertOk();
         $response->assertSeeText('Admin');
         $response->assertSeeText('Items Workspace');
+        $response->assertDontSeeText('THEME-ONLY NAV');
+        $response->assertDontSeeText('THEME-ONLY LAYOUT');
+
+        unlink($themePartialDir . '/admin-nav.blade.php');
+        unlink($themeLayoutDir . '/app.blade.php');
+        rmdir($themeLayoutDir);
+        rmdir($themePartialDir);
+        rmdir($themeDir);
+    }
+
+    public function test_profile_page_survives_theme_layout_overrides(): void
+    {
+        $user = User::factory()->create();
+
+        $themeKey = 'profile-theme';
+        $themeDir = resource_path("views/themes/{$themeKey}");
+        $themeLayoutDir = $themeDir . '/layouts';
+
+        if (!is_dir($themeLayoutDir)) {
+            mkdir($themeLayoutDir, 0777, true);
+        }
+
+        file_put_contents($themeLayoutDir . '/app.blade.php', '<html><body>THEME-ONLY LAYOUT</body></html>');
+
+        SiteSetting::set('active_theme', $themeKey);
+
+        $reflection = new \ReflectionProperty(\App\Support\Theme::class, 'cached');
+        $reflection->setValue(null, null);
+
+        $response = $this->actingAs($user)->get('/profile');
+
+        $response->assertOk();
+        $response->assertSeeText('My Profile');
         $response->assertDontSeeText('THEME-ONLY LAYOUT');
 
         unlink($themeLayoutDir . '/app.blade.php');
         rmdir($themeLayoutDir);
-        $themeLayoutDir = dirname($themeLayoutDir);
-        if (is_dir($themeLayoutDir) && empty(scandir($themeLayoutDir))) {
-            rmdir($themeLayoutDir);
-        }
+        rmdir($themeDir);
     }
 }

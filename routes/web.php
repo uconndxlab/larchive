@@ -164,6 +164,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     // Theme Settings
     Route::get('admin/settings/theme', [ThemeController::class, 'edit'])->name('admin.settings.theme');
     Route::put('admin/settings/theme', [ThemeController::class, 'update'])->name('admin.settings.theme.update');
+    Route::post('admin/settings/theme/reset', [ThemeController::class, 'reset'])->name('admin.settings.theme.reset');
     
     // User Management
     Route::get('admin/users', [UserController::class, 'index'])->name('admin.users.index');
@@ -172,6 +173,8 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('admin/users/{user}/edit', [UserController::class, 'edit'])->name('admin.users.edit');
     Route::put('admin/users/{user}', [UserController::class, 'update'])->name('admin.users.update');
     Route::delete('admin/users/{user}', [UserController::class, 'destroy'])->name('admin.users.destroy');
+    Route::post('admin/users/{user}/tokens', [UserController::class, 'storeToken'])->name('admin.users.tokens.store');
+    Route::delete('admin/users/{user}/tokens/{token}', [UserController::class, 'revokeToken'])->name('admin.users.tokens.destroy');
 });
 
 // Public browsing routes - use visibility scopes to filter content

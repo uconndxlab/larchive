@@ -118,4 +118,38 @@ class UserController extends Controller
             ->route('admin.users.index')
             ->with('success', 'User deleted successfully.');
     }
+
+    /**
+     * Create a personal access token for a user.
+     */
+    public function storeToken(Request $request, User $user)
+    {
+        $this->authorize('update', $user);
+
+        $validated = $request->validate([
+            'name' => 'required|string|min:3|max:100',
+        ]);
+
+        $token = $user->createToken($validated['name']);
+
+        return redirect()
+            ->route('admin.users.edit', $user)
+            ->with('success', 'API token created successfully.')
+            ->with('api_token', $token->plainTextToken)
+            ->with('api_token_name', $validated['name']);
+    }
+
+    /**
+     * Revoke a personal access token for a user.
+     */
+    public function revokeToken(User $user, $token)
+    {
+        $this->authorize('update', $user);
+
+        $user->tokens()->whereKey($token)->delete();
+
+        return redirect()
+            ->route('admin.users.edit', $user)
+            ->with('success', 'API token revoked successfully.');
+    }
 }

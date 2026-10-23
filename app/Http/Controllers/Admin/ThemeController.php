@@ -48,4 +48,19 @@ class ThemeController extends Controller
         return redirect()->route('admin.settings.theme')
             ->with('success', 'Theme updated successfully. You may need to refresh to see changes.');
     }
+
+    /**
+     * Reset the active theme to the app default.
+     */
+    public function reset()
+    {
+        if (!Auth::user()->isAdmin()) {
+            abort(403);
+        }
+
+        SiteSetting::set('active_theme', config('larchive.default_theme', 'default'));
+
+        return redirect()->route('admin.settings.theme')
+            ->with('success', 'The site theme has been reset to the default theme.');
+    }
 }

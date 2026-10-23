@@ -100,19 +100,26 @@
                         <h6 class="alert-heading">
                             <i class="bi bi-info-circle"></i> Theme Development
                         </h6>
-                        <p class="mb-2 small">To create a custom theme:</p>
+                        <p class="mb-2 small">The active theme is selected by its key and resolved from the app's theme registry:</p>
                         <ol class="mb-0 small">
-                            <li>Optionally add theme configuration to <code>config/larchive.php</code> or include a <code>theme.json</code> manifest in your theme directory (auto-discovered)</li>
-                            <li>Create theme views in <code>resources/views/themes/{'{theme-key}'}/</code> or inside your theme repo (e.g. <code>front-ends/</code>)</li>
-                            <li>Add theme CSS to <code>public/themes/{'{theme-folder}'}/theme.css</code> (manifest can map folder → key)</li>
-                            <li>Optionally add assets like logos to <code>public/themes/{'{theme-folder}'}/</code></li>
+                            <li>Theme keys are stored in the database via the <code>active_theme</code> setting.</li>
+                            <li>The app auto-discovers themes from <code>resources/views/themes/*</code> and <code>public/themes/*</code>. A theme directory may include a <code>theme.json</code> manifest with <code>key</code>, <code>name</code>, and optional <code>views</code> paths.</li>
+                            <li>Theme views can live under <code>resources/views/themes/{theme-key}/</code> or in a discovered theme package such as <code>public/themes/{folder}/views</code>, <code>public/themes/{folder}/resources/views</code>, or <code>public/themes/{folder}/front-ends</code>.</li>
+                            <li>Theme CSS is resolved via <code>Theme::cssPath()</code>, which prefers the manifest folder and falls back to <code>public/themes/{folder}/theme.css</code>.</li>
+                            <li>Assets such as logos or images should be placed inside the selected theme folder; the app will look for them relative to that theme's base path.</li>
                         </ol>
                     </div>
 
-                    <div class="d-flex gap-2">
+                    <div class="d-flex gap-2 flex-wrap">
                         <button type="submit" class="btn btn-primary">
                             <i class="bi bi-save"></i> Update Theme
                         </button>
+                        <form action="{{ route('admin.settings.theme.reset') }}" method="POST" class="d-inline">
+                            @csrf
+                            <button type="submit" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-counterclockwise"></i> Reset to Default
+                            </button>
+                        </form>
                     </div>
                 </form>
             </div>

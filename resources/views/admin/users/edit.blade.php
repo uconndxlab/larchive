@@ -16,6 +16,16 @@
                     </div>
                 @endif
 
+                @if(session('api_token'))
+                    <div class="alert alert-warning" role="alert">
+                        <h6 class="alert-heading">New API token created for {{ session('api_token_name', 'this user') }}</h6>
+                        <div class="mt-2">
+                            <code class="d-block text-break">{{ session('api_token') }}</code>
+                        </div>
+                        <div class="small mt-2">Copy this token now. It will not be shown again.</div>
+                    </div>
+                @endif
+
                 {{-- User Activity Summary --}}
                 <div class="card bg-light mb-4">
                     <div class="card-body">
@@ -39,6 +49,48 @@
                                 <p class="mb-1"><strong>Exhibits:</strong> {{ $user->exhibits_count }}</p>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <div class="card bg-light mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">API Tokens</h6>
+                    </div>
+                    <div class="card-body">
+                        <form action="{{ route('admin.users.tokens.store', $user) }}" method="POST" class="mb-3">
+                            @csrf
+                            <label for="token_name" class="form-label">Create API Token</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="token_name" name="name" placeholder="e.g. External importer" required>
+                                <button type="submit" class="btn btn-primary">Create</button>
+                            </div>
+                        </form>
+
+                        @php($tokens = $user->tokens()->latest()->get())
+                        @if($tokens->isEmpty())
+                            <p class="text-muted mb-0">No API tokens exist for this user yet.</p>
+                        @else
+                            <div class="list-group list-group-flush">
+                                @foreach($tokens as $token)
+                                    <div class="list-group-item px-0 d-flex justify-content-between align-items-center gap-3">
+                                        <div>
+                                            <div class="fw-semibold">{{ $token->name ?: 'Unnamed token' }}</div>
+                                            <small class="text-muted">
+                                                Created {{ $token->created_at?->format('M d, Y g:i A') ?? 'unknown' }}
+                                                @if($token->last_used_at)
+                                                    · Last used {{ $token->last_used_at->format('M d, Y g:i A') }}
+                                                @endif
+                                            </small>
+                                        </div>
+                                        <form action="{{ route('admin.users.tokens.destroy', [$user, $token]) }}" method="POST" onsubmit="return confirm('Revoke this API token?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">Revoke</button>
+                                        </form>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
                     </div>
                 </div>
 
