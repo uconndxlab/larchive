@@ -1,11 +1,22 @@
 @auth
-    @if(Auth::user()->isContributor())
+    @php
+        $isStaff = Auth::user()->isContributor() || Auth::user()->isCurator() || Auth::user()->isAdmin();
+    @endphp
+
+    @if($isStaff)
         <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom shadow-sm">
             <div class="container">
-                <a class="navbar-brand me-3" href="{{ route('admin.dashboard') }}">
-                    <i class="bi bi-shield-lock"></i>
-                    Admin
-                </a>
+                @if(Route::has('admin.dashboard'))
+                    <a class="navbar-brand me-3" href="{{ route('admin.dashboard') }}">
+                        <i class="bi bi-shield-lock"></i>
+                        Admin
+                    </a>
+                @else
+                    <span class="navbar-brand me-3">
+                        <i class="bi bi-shield-lock"></i>
+                        Admin
+                    </span>
+                @endif
 
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNav">
                     <span class="navbar-toggler-icon"></span>
