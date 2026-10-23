@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Media;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -14,6 +15,8 @@ class MediaStreamController extends Controller
      */
     public function stream(Request $request, Media $media)
     {
+        Gate::authorize('view', $media->item);
+
         // Check if file exists
         $path = $media->path;
         
@@ -85,6 +88,19 @@ class MediaStreamController extends Controller
     {
         // Sanitize the path
         $path = ltrim($path, '/');
+
+        $media = Media::query()
+            ->where(function ($query) use ($path) {
+                $query->where('path', $path)
+                    ->orWhere('path', 'public/' . $path);
+            })
+            ->first();
+
+        if ($media) {
+            Gate::authorize('view', $media->item);
+        } else {
+            abort(404, 'VTT file not found');
+        }
         
         $disk = Storage::disk('public');
         

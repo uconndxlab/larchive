@@ -30,6 +30,12 @@ Route::get('/api/tags', function() {
     return response()->json($tags);
 })->name('api.tags');
 
+Route::middleware('auth:sanctum')->prefix('api/v1')->group(function () {
+    Route::get('/items', [\App\Http\Controllers\Api\V1\ItemApiController::class, 'index']);
+    Route::get('/items/{item}/transcript', [\App\Http\Controllers\Api\V1\ItemApiController::class, 'transcript']);
+    Route::get('/keywords', [\App\Http\Controllers\Api\V1\ItemApiController::class, 'keywords']);
+});
+
 // Authentication routes
 Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('login', [LoginController::class, 'login']);
