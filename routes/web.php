@@ -75,6 +75,8 @@ Route::get('vtt/{path}', [MediaStreamController::class, 'serveVtt'])->where('pat
 // Admin routes - require authentication and admin role
 // These MUST come before public {item}/{collection}/{exhibit} routes to avoid conflicts
 Route::middleware(['auth', 'admin'])->group(function () {
+    Route::get('admin', fn () => redirect()->route('admin.items.workspace'))->name('admin.dashboard');
+
     // Collection management
     Route::get('collections/create', [CollectionController::class, 'create'])->name('collections.create');
     Route::post('collections', [CollectionController::class, 'store'])->name('collections.store');

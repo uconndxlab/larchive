@@ -4,11 +4,13 @@ namespace Tests\Feature;
 
 use App\Models\Item;
 use App\Models\Media;
+use App\Models\SiteSetting;
 use App\Models\Taxonomy;
 use App\Models\Term;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\View;
 use Tests\TestCase;
 
 class ApiAccessTest extends TestCase
@@ -159,5 +161,36 @@ class ApiAccessTest extends TestCase
             ->get('/media/' . $privateMedia->id . '/stream');
 
         $mediaResponse->assertStatus(403);
+    }
+
+    public function test_admin_menu_survives_theme_layout_overrides(): void
+    {
+        $admin = User::factory()->create([
+            'role' => 'admin',
+        ]);
+
+        SiteSetting::set('active_theme', 'sspm');
+
+        $themeLayoutDir = resource_path('views/themes/sspm/layouts');
+        if (!is_dir($themeLayoutDir)) {
+            mkdir($themeLayoutDir, 0777, true);
+        }
+        file_put_contents($themeLayoutDir . '/app.blade.php', '<html><body>THEME-ONLY LAYOUT</body></html>');
+
+        View::getFinder()->prependLocation(resource_path('views/themes/sspm'));
+
+        $response = $this->actingAs($admin)->get('/admin/items/workspace');
+
+        $response->assertOk();
+        $response->assertSeeText('Admin');
+        $response->assertSeeText('Items Workspace');
+        $response->assertDontSeeText('THEME-ONLY LAYOUT');
+
+        unlink($themeLayoutDir . '/app.blade.php');
+        rmdir($themeLayoutDir);
+        $themeLayoutDir = dirname($themeLayoutDir);
+        if (is_dir($themeLayoutDir) && empty(scandir($themeLayoutDir))) {
+            rmdir($themeLayoutDir);
+        }
     }
 }
