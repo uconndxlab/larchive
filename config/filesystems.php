@@ -30,6 +30,14 @@ return [
 
     'disks' => [
 
+        'transcripts' => [
+            'driver' => 'local',
+            'root' => storage_path('app/transcripts'),
+            'visibility' => 'private',
+            'serve' => false,
+            'throw' => true,
+        ],
+
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),

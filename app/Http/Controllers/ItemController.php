@@ -188,7 +188,7 @@ class ItemController extends Controller
         // Handle transcript upload
         if ($request->hasFile('transcript') && in_array($item->item_type, ['audio', 'video'])) {
             $file = $request->file('transcript');
-            $path = $file->store("items/{$item->id}", 'public');
+            $path = $file->store("items/{$item->id}", 'transcripts');
             $format = $this->detectTranscriptFormat($file, $request->input('transcript_format'));
             
             $transcriptMedia = $item->media()->create([
@@ -323,7 +323,7 @@ class ItemController extends Controller
             if ($item->transcript_id) {
                 $oldTranscript = $item->transcript;
                 if ($oldTranscript) {
-                    Storage::disk('public')->delete($oldTranscript->path);
+                    \App\Services\TranscriptStorage::delete($oldTranscript);
                     $oldTranscript->delete();
                 }
                 $item->update(['transcript_id' => null]);
@@ -336,13 +336,13 @@ class ItemController extends Controller
             if ($item->transcript_id) {
                 $oldTranscript = $item->transcript;
                 if ($oldTranscript) {
-                    Storage::disk('public')->delete($oldTranscript->path);
+                    \App\Services\TranscriptStorage::delete($oldTranscript);
                     $oldTranscript->delete();
                 }
             }
 
             $file = $request->file('transcript');
-            $path = $file->store("items/{$item->id}", 'public');
+            $path = $file->store("items/{$item->id}", 'transcripts');
             $format = $this->detectTranscriptFormat($file, $request->input('transcript_format'));
             
             $transcriptMedia = $item->media()->create([
@@ -543,10 +543,16 @@ class ItemController extends Controller
             'vtt' => 'vtt',
             'srt' => 'srt',
             'txt' => 'txt',
+            'pdf' => 'pdf',
+            'doc' => 'doc',
+            'docx' => 'docx',
             default => match ($mimeType) {
                 'application/xml', 'text/xml' => 'ohms',
                 'text/vtt' => 'vtt',
                 'text/plain' => 'txt',
+                'application/pdf' => 'pdf',
+                'application/msword' => 'doc',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'docx',
                 default => 'txt', // fallback
             },
         };

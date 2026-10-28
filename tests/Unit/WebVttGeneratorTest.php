@@ -11,6 +11,12 @@ class WebVttGeneratorTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        \Storage::fake('transcripts');
+    }
+
     public function test_generates_vtt_from_segments_with_timestamps()
     {
         // Create a mock media object
@@ -31,8 +37,8 @@ class WebVttGeneratorTest extends TestCase
         $this->assertEquals('transcripts/test_transcript.vtt', $vttPath);
         
         // Check that the file starts with WEBVTT
-        $content = \Storage::disk('public')->get($vttPath);
-        $this->assertStringStartsWith('WEBVTT', $content);
+        $content = \Storage::disk('transcripts')->get($vttPath);
+        $this->assertStringStartsWith("\xEF\xBB\xBFWEBVTT", $content);
         $this->assertStringContainsString('Hello, this is the first segment.', $content);
         $this->assertStringContainsString('00:00:00.000 --> 00:00:05.000', $content);
     }
@@ -64,7 +70,7 @@ class WebVttGeneratorTest extends TestCase
 
         $this->assertNotNull($vttPath);
         
-        $content = \Storage::disk('public')->get($vttPath);
+        $content = \Storage::disk('transcripts')->get($vttPath);
         $this->assertStringContainsString('00:00:00.000 --> 00:00:05.000', $content);
     }
 }

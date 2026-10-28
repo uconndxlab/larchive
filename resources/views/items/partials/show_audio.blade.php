@@ -33,7 +33,7 @@
                     </small>
                 </div>
                 <div>
-                    <a href="{{ Storage::url($item->transcript->path) }}" 
+                    <a href="{{ route('transcripts.download', $item->transcript) }}"
                        class="btn btn-primary" 
                        download
                        target="_blank">

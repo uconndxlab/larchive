@@ -113,7 +113,7 @@
                                 <source src="{{ route('media.stream', $video) }}" type="{{ $video->mime_type }}">
                                 @if($vttPath)
                                     <track kind="subtitles" 
-                                           src="{{ route('vtt.serve', ['path' => $vttPath]) }}" 
+                                           src="{{ route('transcripts.captions', $item->transcript) }}"
                                            srclang="en" 
                                            label="English"
                                            default>
@@ -316,7 +316,7 @@
                         <div>
                             @if($item->transcript)
                                 {{-- Original transcript download --}}
-                                <a href="{{ Storage::url($item->transcript->path) }}" 
+                                <a href="{{ route('transcripts.download', $item->transcript) }}"
                                    class="btn btn-sm btn-outline-primary" 
                                    download="{{ $item->transcript->filename }}">
                                     <i class="bi bi-download"></i> Download Original
@@ -331,7 +331,7 @@
                                     $hasVttGenerated = $vttPath && $item->transcript->format !== 'vtt';
                                 @endphp
                                 @if($hasVttGenerated)
-                                    <a href="{{ route('vtt.serve', ['path' => $vttPath]) }}" 
+                                    <a href="{{ route('transcripts.captions', $item->transcript) }}"
                                        class="btn btn-sm btn-outline-success ms-2" 
                                        download="{{ pathinfo($item->transcript->filename, PATHINFO_FILENAME) }}.vtt">
                                         <i class="bi bi-download"></i> Download WebVTT

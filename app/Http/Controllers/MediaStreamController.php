@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Media;
+use App\Services\TranscriptStorage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
@@ -23,7 +24,11 @@ class MediaStreamController extends Controller
         // Strip 'public/' prefix if present (paths stored as 'public/items/...')
         $path = preg_replace('#^public/#', '', $path);
         
-        $disk = Storage::disk('public');
+        $isTranscript = TranscriptStorage::isTranscript($media);
+        if ($isTranscript) {
+            abort_unless($request->user(), 401);
+        }
+        $disk = $isTranscript ? TranscriptStorage::diskFor($path) : Storage::disk('public');
         
         if (!$disk->exists($path)) {
             abort(404, 'Media file not found');
@@ -41,6 +46,7 @@ class MediaStreamController extends Controller
             return response()->file($fullPath, [
                 'Content-Type' => $mimeType,
                 'Accept-Ranges' => 'bytes',
+                'Cache-Control' => 'private, no-store',
             ]);
         }
 
@@ -77,7 +83,7 @@ class MediaStreamController extends Controller
             'Content-Length' => $length,
             'Content-Range' => "bytes {$start}-{$end}/{$fileSize}",
             'Accept-Ranges' => 'bytes',
-            'Cache-Control' => 'public, max-age=31536000',
+            'Cache-Control' => 'private, no-store',
         ]);
     }
 
@@ -102,7 +108,7 @@ class MediaStreamController extends Controller
             abort(404, 'VTT file not found');
         }
         
-        $disk = Storage::disk('public');
+        $disk = TranscriptStorage::diskFor($path);
         
         if (!$disk->exists($path)) {
             abort(404, 'VTT file not found');
@@ -113,6 +119,6 @@ class MediaStreamController extends Controller
         return response($content)
             ->header('Content-Type', 'text/vtt; charset=UTF-8')
             ->header('Content-Disposition', 'inline; filename="' . basename($path) . '"')
-            ->header('Cache-Control', 'public, max-age=31536000');
+            ->header('Cache-Control', 'private, no-store');
     }
 }

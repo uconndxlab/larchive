@@ -4,7 +4,7 @@ namespace App\Transcripts;
 
 use App\Models\Media;
 use App\Services\WebVttGenerator;
-use Illuminate\Support\Facades\Storage;
+use App\Services\TranscriptStorage;
 
 /**
  * SRT transcript source.
@@ -52,7 +52,7 @@ class SrtTranscriptSource implements TranscriptSource
 
     protected function loadSegments(): void
     {
-        $content = Storage::disk('public')->get($this->media->path);
+        $content = TranscriptStorage::diskFor($this->media->path)->get($this->media->path);
         if (!$content) {
             return;
         }
