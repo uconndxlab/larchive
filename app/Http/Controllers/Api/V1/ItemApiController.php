@@ -7,7 +7,6 @@ use App\Models\Item;
 use App\Models\Term;
 use App\Transcripts\TranscriptSourceFactory;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class ItemApiController extends Controller
 {
@@ -73,19 +72,18 @@ class ItemApiController extends Controller
             ], 404);
         }
 
-        $source = TranscriptSourceFactory::create($item);
+        $source = TranscriptSourceFactory::create($transcript);
         $segments = $source?->segments() ?? [];
-        $rawText = $transcript->path ? Storage::disk('public')->get($transcript->path) : null;
 
         return response()->json([
             'item_id' => $item->id,
             'title' => $item->title,
             'filename' => $transcript->filename,
             'format' => $transcript->format ?? 'unknown',
-            'url' => $transcript->path ? Storage::disk('public')->url($transcript->path) : null,
-            'text' => $source ? $this->flattenSegments($segments) : ($rawText ?: null),
+            'url' => $transcript->path ? route('transcripts.download', $transcript) : null,
+            'text' => $source ? $this->flattenSegments($segments) : null,
             'segments' => $segments,
-        ]);
+        ], 200, [], JSON_INVALID_UTF8_SUBSTITUTE);
     }
 
     public function keywords(Request $request)

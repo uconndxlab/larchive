@@ -28,7 +28,7 @@
                             <div class="mt-2 small">
                                 <i class="bi bi-file-earmark-text"></i>
                                 <strong>WebVTT version available:</strong>
-                                <a href="{{ route('vtt.serve', ['path' => $vttPath]) }}" 
+                                <a href="{{ route('transcripts.captions', $item->transcript) }}"
                                    class="btn btn-sm btn-outline-primary ms-2" 
                                    download="{{ pathinfo($item->transcript->filename, PATHINFO_FILENAME) }}.vtt">
                                     <i class="bi bi-download"></i> Download WebVTT

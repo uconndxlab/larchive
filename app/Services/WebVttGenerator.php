@@ -37,7 +37,7 @@ class WebVttGenerator
         $vttPath = $directory . '/' . $vttFilename;
         
         // Save the VTT file with explicit UTF-8 encoding
-        Storage::disk('public')->put($vttPath, $vttContent, ['mime_type' => 'text/vtt; charset=UTF-8']);
+        Storage::disk('transcripts')->put($vttPath, $vttContent, ['mime_type' => 'text/vtt; charset=UTF-8']);
         
         return $vttPath;
     }
@@ -137,7 +137,7 @@ class WebVttGenerator
     public static function vttExists(Media $media): bool
     {
         $vttPath = self::getVttPath($media);
-        return Storage::disk('public')->exists($vttPath);
+        return TranscriptStorage::diskFor($vttPath)->exists($vttPath);
     }
 
     /**
@@ -149,8 +149,8 @@ class WebVttGenerator
     public static function deleteVtt(Media $media): bool
     {
         $vttPath = self::getVttPath($media);
-        if (Storage::disk('public')->exists($vttPath)) {
-            return Storage::disk('public')->delete($vttPath);
+        if (TranscriptStorage::diskFor($vttPath)->exists($vttPath)) {
+            return TranscriptStorage::diskFor($vttPath)->delete($vttPath);
         }
         return false;
     }

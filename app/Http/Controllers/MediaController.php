@@ -176,7 +176,9 @@ class MediaController extends Controller
         $item = $media->item;
 
         // Delete file from storage
-        if (Storage::disk('public')->exists($media->path)) {
+        if (\App\Services\TranscriptStorage::isTranscript($media)) {
+            \App\Services\TranscriptStorage::delete($media);
+        } elseif (Storage::disk('public')->exists($media->path)) {
             Storage::disk('public')->delete($media->path);
         }
 

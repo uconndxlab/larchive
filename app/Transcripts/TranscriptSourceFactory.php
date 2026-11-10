@@ -39,7 +39,9 @@ class TranscriptSourceFactory
         
         // Skip unsupported binary formats (PDF, DOC, DOCX)
         // These are accepted as transcript uploads but can't be parsed or converted to VTT
-        if (in_array($format, ['pdf', 'doc', 'docx'])) {
+        // Older uploads may have been stored with format=txt even for documents.
+        if (in_array($format, ['pdf', 'doc', 'docx'])
+            || in_array(self::detectFormat($source), ['pdf', 'doc', 'docx'])) {
             return null;
         }
 

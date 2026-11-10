@@ -5,7 +5,7 @@ namespace App\Transcripts;
 use App\Models\Item;
 use App\Models\Media;
 use App\Services\WebVttGenerator;
-use Illuminate\Support\Facades\Storage;
+use App\Services\TranscriptStorage;
 use SimpleXMLElement;
 
 /**
@@ -110,7 +110,7 @@ class OhmsTranscriptSource implements TranscriptSource
     protected function getXmlContent(): ?string
     {
         if ($this->source instanceof Media) {
-            return Storage::disk('public')->get($this->source->path);
+            return TranscriptStorage::diskFor($this->source->path)->get($this->source->path);
         }
 
         // For Item, check if ohms_json exists (legacy), or find transcript media
@@ -122,7 +122,7 @@ class OhmsTranscriptSource implements TranscriptSource
 
         $transcript = $this->source->media()->transcripts()->first();
         if ($transcript) {
-            return Storage::get($transcript->path);
+            return TranscriptStorage::diskFor($transcript->path)->get($transcript->path);
         }
 
         return null;

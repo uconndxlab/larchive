@@ -67,6 +67,10 @@ Route::get('/', function () {
 Route::post('notice/acknowledge', [SiteNoticeController::class, 'acknowledge'])->name('notice.acknowledge');
 
 // Media streaming route with range request support (for seekable audio/video)
+Route::get('transcripts/{media}/download', [\App\Http\Controllers\TranscriptController::class, 'download'])
+    ->middleware('auth:sanctum')->name('transcripts.download');
+Route::get('transcripts/{media}/captions', [\App\Http\Controllers\TranscriptController::class, 'captions'])
+    ->name('transcripts.captions');
 Route::get('media/{media}/stream', [MediaStreamController::class, 'stream'])->name('media.stream');
 
 // VTT file serving route with proper UTF-8 headers
