@@ -1,6 +1,11 @@
 <?php
 
 return [
+    'extraction' => [
+        'ffprobe' => env('FFPROBE_BINARY', 'ffprobe'),
+        'antiword' => env('ANTIWORD_BINARY', 'antiword'),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Maximum Upload Size (MB)
@@ -8,7 +13,7 @@ return [
     |
     | Maximum file size for media uploads in megabytes.
     | This should match or be lower than your PHP upload_max_filesize.
-    | 
+    |
     | Default: 200MB (suitable for most audio/video files)
     | For very large videos, consider increasing to 500MB or 1GB.
     |
@@ -27,19 +32,19 @@ return [
     'allowed_mime_types' => [
         // Audio formats
         'mp3', 'wav', 'ogg', 'flac', 'm4a', 'aac', 'wma',
-        
+
         // Video formats
         'mp4', 'mov', 'avi', 'wmv', 'flv', 'webm', 'mkv',
-        
+
         // Image formats
         'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'tiff',
-        
+
         // Document formats
         'pdf', 'doc', 'docx', 'txt', 'rtf',
-        
+
         // Transcript/subtitle formats
         'vtt', 'srt',
-        
+
         // Archive formats
         'zip',
     ],
@@ -50,7 +55,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | Default storage disk for media files.
-    | 
+    |
     | Options:
     | - 'local' or 'public' for local storage (development only)
     | - 'archives' for S3-compatible object storage (production)
@@ -69,16 +74,16 @@ return [
     'processing' => [
         // Whether to process media asynchronously via queue
         'enabled' => env('MEDIA_PROCESSING_ENABLED', true),
-        
+
         // Queue name for media processing jobs
         'queue' => env('MEDIA_PROCESSING_QUEUE', 'media'),
-        
+
         // Extract metadata (duration, dimensions, etc.)
         'extract_metadata' => true,
-        
+
         // Generate thumbnails for videos and images
         'generate_thumbnails' => env('MEDIA_GENERATE_THUMBNAILS', false),
-        
+
         // Generate waveforms for audio files
         'generate_waveforms' => env('MEDIA_GENERATE_WAVEFORMS', false),
     ],

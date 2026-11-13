@@ -3,8 +3,8 @@
 namespace App\Transcripts;
 
 use App\Models\Media;
-use App\Services\WebVttGenerator;
 use App\Services\TranscriptStorage;
+use App\Services\WebVttGenerator;
 
 /**
  * SRT transcript source.
@@ -12,6 +12,7 @@ use App\Services\TranscriptStorage;
 class SrtTranscriptSource implements TranscriptSource
 {
     protected array $segments = [];
+
     protected ?string $vttPath = null;
 
     public function __construct(protected Media $media)
@@ -39,11 +40,12 @@ class SrtTranscriptSource implements TranscriptSource
         // Check if VTT file already exists
         if (WebVttGenerator::vttExists($this->media)) {
             $this->vttPath = WebVttGenerator::getVttPath($this->media);
+
             return $this->vttPath;
         }
 
         // Generate VTT file from parsed segments
-        if (!empty($this->segments)) {
+        if (! empty($this->segments)) {
             $this->vttPath = WebVttGenerator::generateFromSegments($this->segments, $this->media);
         }
 
@@ -53,7 +55,7 @@ class SrtTranscriptSource implements TranscriptSource
     protected function loadSegments(): void
     {
         $content = TranscriptStorage::diskFor($this->media->path)->get($this->media->path);
-        if (!$content) {
+        if (! $content) {
             return;
         }
 
@@ -99,6 +101,8 @@ class SrtTranscriptSource implements TranscriptSource
     {
         // SRT uses commas: 00:00:01,000
         $timestamp = str_replace(',', '.', $timestamp);
-        return (new VttTranscriptSource($this->media))->parseTimestamp($timestamp);
+        [$hours, $minutes, $seconds] = explode(':', $timestamp);
+
+        return (float) $hours * 3600 + (float) $minutes * 60 + (float) $seconds;
     }
 }

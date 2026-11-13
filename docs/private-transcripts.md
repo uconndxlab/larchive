@@ -2,7 +2,7 @@
 
 New transcript uploads and generated captions are stored under `storage/app/transcripts`, outside the public storage symlink. Keep this directory on persistent storage and include it in backups. Do not expose it through a web server alias or a storage symlink. On multiple app servers, this directory must be shared or replicated consistently.
 
-The transcript API returns `/transcripts/{media}/download`. Downloads require either a signed-in browser session or an `Authorization: Bearer ...` header, plus permission to view the item. API clients must send their token when fetching this URL; it does not contain a token. Access is checked for every download. Responses use `Cache-Control: private, no-store`.
+The transcript API returns cached plain text and recording durations; see [transcript-api.md](transcript-api.md). It no longer returns original-document download URLs. The separate archival download route is `/transcripts/{media}/download`. Downloads require either a signed-in browser session or an `Authorization: Bearer ...` header, plus permission to view the item. API clients must send their token when fetching this URL; it does not contain a token. Access is checked for every download. Responses use `Cache-Control: private, no-store`.
 
 Captions are served through `/transcripts/{media}/captions` and follow the item's view policy. Public published items can show captions without login; authenticated and hidden items require the corresponding permissions. Changing an item's visibility applies to subsequent requests. Uploaded originals always require authentication, including originals belonging to public items.
 

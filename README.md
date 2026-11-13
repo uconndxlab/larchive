@@ -47,6 +47,8 @@ Logged-in admin users can manage items, collections, exhibits, users, API tokens
 php artisan test
 ```
 
+See [Transcript API documentation](docs/transcript-api.md) for extracted text, recording durations, dependencies, and backfill commands.
+
 ## Theme installation
 
 Theme packages live under `public/themes/` and can be selected from the admin theme settings.

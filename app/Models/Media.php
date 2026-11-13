@@ -19,16 +19,46 @@ class Media extends Model
         'processing_status',
         'processing_error',
         'processed_at',
+        'transcript_text',
+        'duration_seconds',
         'metadata',
         'meta', // Legacy field, keeping for backward compatibility
     ];
 
     protected $casts = [
+        'transcript_segments' => 'array',
+        'transcript_extracted_at' => 'datetime',
+        'duration_seconds' => 'float',
         'meta' => 'array',
         'metadata' => 'array',
         'is_transcript' => 'boolean',
         'processed_at' => 'datetime',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (Media $media) {
+            // An explicitly supplied transcript is curated, including an empty string.
+            if ($media->isDirty('transcript_text')) {
+                $media->transcript_extracted_at = null;
+                $media->transcript_segments = null;
+            }
+            if ($media->exists && $media->isDirty(['path', 'filename', 'mime_type', 'format', 'is_transcript'])) {
+                if ($media->transcript_extracted_at !== null) {
+                    $media->transcript_text = null;
+                    $media->transcript_segments = null;
+                    $media->transcript_extracted_at = null;
+                }
+                $media->duration_seconds = null;
+            }
+        });
+        static::created(fn (Media $media) => \App\Jobs\ExtractMediaMetadata::dispatch($media->id));
+        static::updated(function (Media $media) {
+            if ($media->wasChanged(['path', 'filename', 'mime_type', 'format', 'is_transcript'])) {
+                \App\Jobs\ExtractMediaMetadata::dispatch($media->id);
+            }
+        });
+    }
 
     public function item()
     {
@@ -47,7 +77,7 @@ class Media extends Model
     }
 
     // Processing status helpers
-    
+
     /**
      * Check if media is ready for display.
      */
@@ -117,8 +147,8 @@ class Media extends Model
     public function getFormattedDurationAttribute(): ?string
     {
         $seconds = $this->metadata['duration'] ?? null;
-        
-        if (!$seconds) {
+
+        if (! $seconds) {
             return null;
         }
 

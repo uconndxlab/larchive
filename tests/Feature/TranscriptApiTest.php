@@ -28,7 +28,7 @@ class TranscriptApiTest extends TestCase
     }
 
     #[DataProvider('documentFormats')]
-    public function test_document_transcripts_return_a_url_without_binary_text(string $extension, string $mimeType, ?string $format): void
+    public function test_malformed_or_unsupported_documents_do_not_expose_originals(string $extension, string $mimeType, ?string $format): void
     {
         $item = $this->createTranscript($extension, $mimeType, $format, "Document bytes: \xFF\xFE\x80");
         $user = User::factory()->create(['role' => 'contributor']);
@@ -36,8 +36,10 @@ class TranscriptApiTest extends TestCase
 
         $this->withToken($token)->getJson('/api/v1/items/'.$item->id.'/transcript')
             ->assertOk()
-            ->assertJsonPath('filename', 'transcript.'.$extension)
-            ->assertJsonPath('url', route('transcripts.download', $item->transcript))
+            ->assertJsonMissingPath('filename')
+            ->assertJsonMissingPath('url')
+            ->assertJsonMissingPath('path')
+            ->assertJsonPath('transcript_text', null)
             ->assertJsonPath('text', null)
             ->assertJsonPath('segments', []);
 

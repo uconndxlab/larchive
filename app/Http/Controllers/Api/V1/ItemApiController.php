@@ -4,15 +4,16 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Item;
+use App\Models\Media;
 use App\Models\Term;
-use App\Transcripts\TranscriptSourceFactory;
+use App\Services\TranscriptStorage;
 use Illuminate\Http\Request;
 
 class ItemApiController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Item::with(['collection', 'terms.taxonomy']);
+        $query = Item::with(['collection', 'terms.taxonomy', 'transcript']);
 
         if (! $request->user()?->isAdmin()) {
             $query->published()->visibleTo($request->user());
@@ -39,11 +40,11 @@ class ItemApiController extends Controller
                     'name' => $term->name,
                     'slug' => $term->slug,
                 ])->values()->all(),
-                'transcript' => $item->hasTranscript() ? [
-                    'id' => $item->transcript?->id,
-                    'filename' => $item->transcript?->filename,
-                    'format' => $item->transcript?->format,
-                ] : null,
+                'transcript' => ($item->transcript && $item->transcript->item_id === $item->id
+                    && $this->mediaVisible($item->transcript, $request)) ? [
+                        'id' => $item->transcript?->id,
+                        'format' => $item->transcript?->format,
+                    ] : null,
             ]);
 
         return response()->json([
@@ -72,18 +73,38 @@ class ItemApiController extends Controller
             ], 404);
         }
 
-        $source = TranscriptSourceFactory::create($transcript);
-        $segments = $source?->segments() ?? [];
+        abort_unless($transcript->item_id === $item->id && $this->mediaVisible($transcript, $request), 404);
+        // All recordings belonging to this item are returned; no arbitrary primary
+        // recording is inferred for interviews with multiple tracks or versions.
+        $recordings = $item->media()->orderBy('id')->get()
+            ->filter(fn (Media $media) => ! TranscriptStorage::isTranscript($media)
+                && (str_starts_with($media->mime_type, 'audio/') || str_starts_with($media->mime_type, 'video/'))
+                && $this->mediaVisible($media, $request))
+            ->map(fn (Media $media) => [
+                'media_id' => $media->id,
+                'mime_type' => $media->mime_type,
+                'duration_seconds' => $media->duration_seconds,
+            ])->values();
 
         return response()->json([
             'item_id' => $item->id,
+            'media_id' => $transcript->id,
             'title' => $item->title,
-            'filename' => $transcript->filename,
-            'format' => $transcript->format ?? 'unknown',
-            'url' => $transcript->path ? route('transcripts.download', $transcript) : null,
-            'text' => $source ? $this->flattenSegments($segments) : null,
-            'segments' => $segments,
-        ], 200, [], JSON_INVALID_UTF8_SUBSTITUTE);
+            'format' => $transcript->format ?? strtolower(pathinfo($transcript->filename, PATHINFO_EXTENSION)),
+            'transcript_text' => $transcript->transcript_text,
+            'text' => $transcript->transcript_text,
+            'segments' => $transcript->transcript_segments ?? [],
+            'recordings' => $recordings,
+        ], 200, ['Cache-Control' => 'private, no-store'], JSON_INVALID_UTF8_SUBSTITUTE);
+    }
+
+    private function mediaVisible(Media $media, Request $request): bool
+    {
+        $visibility = $media->metadata['visibility'] ?? 'public';
+
+        return $request->user()?->isAdmin()
+            || $visibility === 'public'
+            || ($visibility === 'authenticated' && $request->user() !== null);
     }
 
     public function keywords(Request $request)
@@ -116,13 +137,5 @@ class ItemApiController extends Controller
             'data' => $keywords,
             'count' => count($keywords),
         ]);
-    }
-
-    protected function flattenSegments(array $segments): string
-    {
-        return collect($segments)
-            ->pluck('text')
-            ->filter(fn ($line) => is_string($line) && trim($line) !== '')
-            ->implode("\n");
     }
 }

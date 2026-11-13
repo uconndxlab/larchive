@@ -36,8 +36,9 @@ class PrivateTranscriptTest extends TestCase
         $this->assertSame('Protected transcript', $response->streamedContent());
         $this->assertStringContainsString('no-store', $response->headers->get('Cache-Control'));
 
+        $this->artisan('transcripts:extract-text')->assertSuccessful();
         $this->withToken($token)->getJson('/api/v1/items/'.$media->item_id.'/transcript')
-            ->assertOk()->assertJsonPath('text', 'Protected transcript')->assertJsonPath('url', $url);
+            ->assertOk()->assertJsonPath('text', 'Protected transcript')->assertJsonMissingPath('url');
 
         $media->item->update(['visibility' => 'hidden']);
         $this->withToken($token)->get($url)->assertForbidden();

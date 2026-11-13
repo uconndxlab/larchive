@@ -5,11 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\User;
 
 /**
  * Item model for archival objects.
- * 
+ *
  * Supports oral history use cases with:
  * - Item types (audio, video, image, document, other)
  * - Transcript relationship for audio/video items
@@ -50,6 +49,12 @@ class Item extends Model
             if (auth()->check()) {
                 $item->created_by = auth()->id();
                 $item->updated_by = auth()->id();
+            }
+        });
+
+        static::saved(function (Item $item) {
+            if ($item->transcript_id && $item->wasChanged('transcript_id')) {
+                \App\Jobs\ExtractMediaMetadata::dispatch((int) $item->transcript_id);
             }
         });
 
@@ -152,6 +157,7 @@ class Item extends Model
     {
         if ($value === null) {
             $this->metadata()->where('key', $key)->delete();
+
             return;
         }
 
@@ -242,41 +248,41 @@ class Item extends Model
     public function getUnattachedUploads(): array
     {
         $incomingPath = storage_path("app/public/items/{$this->id}/incoming");
-        
-        if (!is_dir($incomingPath)) {
+
+        if (! is_dir($incomingPath)) {
             return [];
         }
 
         // Get all attached file paths for this item
         $attachedPaths = $this->media()->pluck('path')->toArray();
-        
+
         $files = [];
         $items = scandir($incomingPath);
-        
+
         foreach ($items as $item) {
             if ($item === '.' || $item === '..') {
                 continue;
             }
-            
-            $fullPath = $incomingPath . '/' . $item;
-            
-            if (!is_file($fullPath)) {
+
+            $fullPath = $incomingPath.'/'.$item;
+
+            if (! is_file($fullPath)) {
                 continue;
             }
-            
+
             // Check if this file is already attached
             $relativePath = "items/{$this->id}/incoming/{$item}";
             if (in_array($relativePath, $attachedPaths)) {
                 continue;
             }
-            
+
             $files[] = [
                 'name' => $item,
                 'size' => filesize($fullPath),
                 'modified' => filemtime($fullPath),
             ];
         }
-        
+
         return $files;
     }
 }
