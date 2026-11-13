@@ -62,3 +62,28 @@ Both commands process records in batches, skip non-null cached values, continue 
 New Media uploads and source changes enqueue `ExtractMediaMetadata` after the database transaction commits, on the existing `media.processing.queue` (default `media`). Attaching a legacy transcript through `transcript_id` also enqueues extraction. Ensure a worker consumes that queue, for example `php artisan queue:work --queue=media`; the sync queue connection runs inline. This metadata job operates independently of the optional thumbnail/getID3 upload-processing switch. API requests only read the database and never parse documents or run FFprobe. If extraction fails, fix the source/tool/storage issue and rerun the relevant command.
 
 Cached text lives in `media.transcript_text`, parsed segments in `transcript_segments`, extraction provenance in `transcript_extracted_at`, and measured duration in `duration_seconds`. Setting `transcript_text` through the Media model marks it as curated and clears generated segments/provenance. Backfills never overwrite non-null text, including an intentionally empty string. Replacing a source via the Media model clears generated text and duration and enqueues fresh extraction; curated text is retained. Bulk SQL writes and replacing file bytes in place bypass model hooks; import scripts must explicitly enqueue extraction and invalidate generated caches when doing that. The new columns are included in normal database backups; text should receive the same access protections as the original private documents.
+
+## Test the deployed API
+
+Run `api:test` from the app directory. It makes real, read-only HTTP requests to `APP_URL` (or `--url`), so it checks the deployed web application, not just the local database. It checks that unauthenticated item requests return 401, tests authenticated item and keyword list responses, and validates transcript response fields and numeric recording durations. It reports document URLs/paths or metadata unexpectedly present in transcript responses. It does not prove that every visibility policy is correct; the automated authorization tests cover those rules.
+
+```bash
+# Enter the key at a hidden prompt; tests up to five discovered transcripts.
+php artisan api:test
+
+# Test every visible primary transcript on a specific deployment.
+php artisan api:test --url=https://archive.example.org --limit=0
+
+# Test one item's transcript (item ID, not Media ID).
+php artisan api:test --item=123
+
+# Explicit key option is also supported.
+php artisan api:test --key='YOUR_API_KEY' --item=123
+
+# Treat missing cached text/duration as failures as well.
+php artisan api:test --limit=0 --strict
+```
+
+Prefer the hidden prompt on shared servers: a literal `--key` can appear in shell history and process arguments. The command never prints keys, transcript content or response bodies. Redirects are not followed; use the final application URL. HTTP requests use a five-second connection timeout and a thirty-second request timeout, with normal TLS verification.
+
+Exit code 0 means the checks passed; code 1 means an HTTP/schema/security check failed, an option was invalid, or strict mode encountered a warning. Null extracted text/duration produces warnings by default, including unsupported PDFs. No discoverable transcripts also produces a warning; use `--item` to select one explicitly. An explicit inaccessible or absent transcript returns 404 and is reported as a failure. The command never modifies records, runs backfills or downloads original documents.
